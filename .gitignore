@@ -1,0 +1,7 @@
+build/
+
+# tempfiles
+*.swp
+*.swap
+*.tmp
+*.temp
