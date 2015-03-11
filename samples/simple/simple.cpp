@@ -1,60 +1,38 @@
+#include <boost/asio.hpp>
+#include <boost/asio/use_future.hpp>
 #include <iostream>
-#include <algorithm>
-#include <string>
-#include <map>
-#include <set>
-#include <logx.hpp>
-#include <logx/sink.hpp>
-#include <logx/sinks/text_sink.hpp>
-#include <logx/sinks/xml_sink.hpp>
-#include <logx/dump.hpp>
-#include <mutex>
+#include "xnet/lan_discoverer.hpp"
 
-struct uncopyable
-{
-	uncopyable(){}
-	uncopyable(const uncopyable&&) = delete;
-	uncopyable(const uncopyable&) = delete;
-	uncopyable& operator=(const uncopyable&) = delete;
 
-private:
-	std::mutex xx;
-};
-
-std::ostream& operator << (std::ostream& os, const uncopyable& c)
-{
-	os << "[uncopyable]";
-	return os;
-}
-
+namespace asio = boost::asio;
+using namespace xnet;
 
 int main()
-{
-	logx::backend logbackend;
+{	
+	try {
+		asio::io_service service;
+		asio::io_service::work work(service);
+		lan_discoverer discoverer(service, "simple");
 
-	logx::core::get_core().remove_all_sinks();
-	auto sink = std::make_shared<logx::xml_sink<>>(std::cout);
-	logx::core::get_core().add_sink(std::bind(&logx::xml_sink<>::on_message, sink, std::placeholders::_1));
+		discoverer.open(lan_discoverer::protocol_type::v4(), 12345);
+		discoverer.scan(12345);
+		discoverer.announce(12345, lan_discovery_content("a simple tests"));
 
-	std::set<float> xx = { 4.0f, 9.3f, 8.4f };
-	std::map<std::string, int> ages;
-	ages["tobi"] = 22;
-	ages["tally"] = 23;
-	ages["jan"] = 34;
-	std::vector<int> vec = { 1, 2, 3 };
+		std::function<void(const boost::system::error_code, const lan_discoverer::result&)> func = [&](const boost::system::error_code& ec, const lan_discoverer::result& result)
+		{
+			//std::cout << result.message() << std::endl;
+			//discoverer.async_search(func);
+		};
+		discoverer.discover();
 
 
-	logx::logger<logx::tags::cat> logger { "test" };
-
-	logger.logxINFO("here comes a string: " << logx::mapped(ages.begin(), ages.end()));
-
-	//logx::log("here comes a string: " << 1.0f << ", test, " << L"wie gehts");
-
-	uncopyable un;
-	logx::logxWARN("here comes a string again: 1" << logx::nocp(un) << "bye");
-
-	logx::logxERROR("Hallo \"tobi\"" << 1 << logx::nocp(un) << " wie gehts?");
-
+		service.run();
+	}
+	catch (const std::exception& e)
+	{
+		std::cout << e.what() << std::endl;
+	}
 	std::cin.get();
+
 	return 0;
 }

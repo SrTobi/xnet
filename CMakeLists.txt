@@ -18,6 +18,11 @@ set(XNET_PUBLIC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 buildx_scan(XNET_PUBLIC_INCLUDES ${XNET_PUBLIC_INCLUDE_DIR} "hpp")
 buildx_debug("public includes: ${XNET_PUBLIC_INCLUDES}" proj)
 
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+
 add_subdirectory("src")
 add_subdirectory("samples")
 

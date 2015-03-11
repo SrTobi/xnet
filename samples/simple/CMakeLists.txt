@@ -8,4 +8,8 @@ buildx_auto_group("${XNET_PUBLIC_INCLUDES}")
 
 add_executable(simple-sample ${SIMPLE_SAMPLE_SOURCE} ${XNET_PUBLIC_INCLUDES})
 target_link_libraries(simple-sample xnet)
+if(WIN32)
+	target_compile_definitions(simple-sample PRIVATE "_WIN32_WINNT=0x0501")
+endif(WIN32)
+
 buildx_copy_target_dependencies(simple-sample)

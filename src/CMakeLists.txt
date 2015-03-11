@@ -9,18 +9,17 @@ include_directories(.)
 if(WIN32)
 	SET(Boost_USE_STATIC_LIBS ON)
 endif()
-find_package(Boost COMPONENTS system REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
 
 
-
-add_library(xnet SHARED ${XNET_SOURCE} ${XNET_PUBLIC_INCLUDES})
+add_library(xnet STATIC ${XNET_SOURCE} ${XNET_PUBLIC_INCLUDES})
 target_link_libraries(xnet ${Boost_LIBRARIES})
 buildx_export_header(xnet
 					DESTINATION_FILE "XNET_PUBLIC_INCLUDES"
 					DESTINATION_DIR "XNET_EXPORT_API_DIR"
 					SUB_DIR xnet)
+if(WIN32)
+	target_compile_definitions(xnet PRIVATE "_WIN32_WINNT=0x0501")
+endif(WIN32)
 
 install(TARGETS xnet EXPORT xnetTargets
   LIBRARY DESTINATION lib/${XNET_VERSION_DIR}
