@@ -17,13 +17,13 @@ namespace xnet {
 	public:
 		basic_network_interface_lister(boost::asio::io_service& service)
 			: _resolver(service)
-			, _query("")
+			, _query(boost::asio::ip::host_name(), "")
 		{
 		}
 
 		basic_network_interface_lister(boost::asio::io_service& service, const protocol_type& protocol)
 			: _resolver(service)
-			, _query(protocol, "")
+			, _query(protocol, boost::asio::ip::host_name(), "")
 		{
 		}
 

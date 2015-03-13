@@ -36,12 +36,10 @@ void start_client()
 			//discoverer.async_search(func);
 		};*/
 		std::cout << "[" << result.origin() << "]: " << result.content().message();
-		std::cin.get();
 	}
 	catch (const std::exception& e)
 	{
 		std::cout << e.what() << std::endl;
-		std::cin.get();
 	}
 }
 
@@ -70,16 +68,45 @@ void start_server()
 			//discoverer.async_search(func);
 		};*/
 		//std::cout << "[" << result.origin() << "]: " << result.content().message();
-		std::cin.get();
 	}
 	catch (const std::exception& e)
 	{
 		std::cout << e.what() << std::endl;
-		std::cin.get();
 	}
 }
 
+void start_both()
+{
+	try {
+		asio::io_service service;
+		//asio::io_service::work work(service);
+		multicast_server server(service, "simple");
+		multicast_client client(service, "simple");
 
+		server.open(boost::asio::ip::udp::v4());
+		client.open(boost::asio::ip::udp::v4());
+
+		std::cout << "Server: " << server.underlying_socket().local_endpoint() << std::endl;
+		std::cout << "Client: " << client.underlying_socket().local_endpoint() << std::endl;
+
+		std::cout << "Server target: " << server.multicast_endpoint() << std::endl;
+
+
+		std::function<void(const boost::system::error_code&, const multicast_client::result&)> func = [&](const boost::system::error_code& ec, const multicast_client::result& result)
+		{
+			std::cout << result.content().message() << std::endl;
+			client.async_discover(func);
+		};
+		client.async_discover(func);
+
+		server.async_announce(lan_discovery_content("a simple tests"), asio::use_future);
+		service.run();
+	}
+	catch (const std::exception& e)
+	{
+		std::cout << e.what() << std::endl;
+	}
+}
 
 
 int main()
@@ -96,14 +123,20 @@ int main()
 		if (c == 's')
 		{
 			start_server();
-			return 0;
+			break;
 		}
 		else if (c == 'c')
 		{
 			start_client();
-			return 0;
+			break;
+		}
+		else if (c == 'b')
+		{
+			start_both();
+			break;
 		}
 	}
+	std::cin.get();
 
 	return 0;
 }
