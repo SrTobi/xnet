@@ -145,6 +145,7 @@ namespace xnet {
 		}
 
 		socket_type& underlying_socket() { return _socket; }
+		const socket_type& underlying_socket() const { return _socket; }
 		const endpoint& multicast_endpoint() const { return _multicastEndpoint; }
 
 	protected:
