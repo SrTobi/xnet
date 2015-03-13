@@ -32,7 +32,7 @@ void start_client()
 
 		std::function<void(const boost::system::error_code&, const multicast_client::result&)> func = [&](const boost::system::error_code& ec, const multicast_client::result& result)
 		{
-			std::cout << "Message: " << result.content().value() << std::endl;
+			std::cout << "Message from " << result.identifier() << ": " << result.content().value() << std::endl;
 			client.async_discover(func);
 		};
 		client.async_discover(func);

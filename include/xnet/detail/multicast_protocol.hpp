@@ -5,6 +5,7 @@
 #include <string>
 #include <random>
 #include <boost/asio.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace xnet {
 	namespace detail {
@@ -91,7 +92,7 @@ namespace xnet {
 			}
 
 			template<typename Iter>
-			static bool parse_announce_message(Iter begin, Iter end, const std::string& expToken, std::string& id, content_type& content)
+			static bool parse_announce_message(Iter begin, Iter end, const std::string& expToken, uint64_t& id, content_type& content)
 			{
 				boost::match_results<Iter> matches;
 				if (!_parse_message(begin, end, expToken, matches))
@@ -102,7 +103,7 @@ namespace xnet {
 				if (*matches["cmd"].first != static_cast<char>(Command::Announce))
 					return false;
 
-				id = matches["id"];
+				id = boost::lexical_cast<uint64_t>(matches["id"]);
 
 				auto& contentMatch = matches["content"];
 				return content.deserialize(contentMatch.first, contentMatch.second);

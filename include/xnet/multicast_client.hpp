@@ -33,12 +33,12 @@ namespace xnet {
 
 			const content_type& content() const { return _content; }
 			const endpoint_type& origin() const { return _recvfrom; }
-			const std::string& identifier() const { return _identifier; }
+			const uint64_t& identifier() const { return _identifier; }
 
 		private:
 			content_type _content;
 			endpoint_type _recvfrom;
-			std::string _identifier;
+			uint64_t _identifier;
 		};
 
 	private:
