@@ -17,7 +17,7 @@ namespace xnet {
 		typedef ContentType				content_type;
 		typedef boost::asio::ip::udp	protocol_type;
 		typedef protocol_type::socket	socket_type;
-		typedef protocol_type::endpoint endpoint_type;
+		typedef protocol_type::endpoint endpoint;
 	private:
 		typedef std::array<char, 2048> recvbuffer_type;
 	public:
@@ -41,7 +41,7 @@ namespace xnet {
 
 		boost::system::error_code announce(const content_type& content, boost::system::error_code& ec)
 		{
-			auto message = multicast_protocol::build_message(_token, _identifier, multicast_protocol::Command::Announce, content);
+			auto message = multicast_protocol::build_announce_message(_token, _identifier, content);
 			_socket.send_to(boost::asio::buffer(message), _multicastEndpoint, 0, ec);
 			return ec;
 		}
@@ -56,12 +56,49 @@ namespace xnet {
 				BOOST_ASIO_MOVE_CAST(AnnounceHandler)(handler));
 
 			auto innerHandler = std::move(init.handler);
-			auto message = boost::make_shared<std::string>(multicast_protocol::build_message(_token, _identifier, multicast_protocol::Command::Announce, content));
+			auto message = boost::make_shared<std::string>(multicast_protocol::build_announce_message(_token, _identifier, content));
 			_socket.async_send_to(boost::asio::buffer(*message), _multicastEndpoint, _sendStrand.wrap(
 				[innerHandler, message](const boost::system::error_code& ec, std::size_t sendLen) mutable
 			{
 				innerHandler(ec);
 			}));
+
+			return init.result.get();
+		}
+
+		void capture(endpoint& origin)
+		{
+			boost::system::error_code ec;
+			auto res = discover(origin, ec);
+			boost::asio::detail::throw_error(ec);
+			return res;
+		}
+
+		boost::system::error_code capture(endpoint& origin, boost::system::error_code& ec)
+		{
+			result res;
+			bool ok;
+			do {
+				auto len = _socket.receive_from(boost::asio::buffer(_recvBuffer), origin, 0, ec);
+				XNET_RETURN_ERROR(ec);
+
+				ok = _handle_capture(len);
+
+			} while (!ok);
+
+			return ec;
+		}
+
+		template<typename DiscoverHandler>
+		BOOST_ASIO_INITFN_RESULT_TYPE(DiscoverHandler,
+			void(boost::system::error_code))
+			async_capture(endpoint& origin, BOOST_ASIO_MOVE_ARG(DiscoverHandler) handler)
+		{
+			boost::asio::detail::async_result_init<
+				DiscoverHandler, void(boost::system::error_code)> init(
+				BOOST_ASIO_MOVE_CAST(DiscoverHandler)(handler));
+
+			_start_async_capture(origin, std::move(init.handler));
 
 			return init.result.get();
 		}
@@ -79,13 +116,30 @@ namespace xnet {
 			BOOST_ASSERT(idString.size() <= 20);
 			return idString;
 		}
+
+		template<typename Handler>
+		void _start_async_capture(endpoint& origin, Handler handler)
+		{
+			_socket.async_receive_from(boost::asio::buffer(_recvBuffer), origin, 
+				[handler, this, &origin](const boost::system::error_code& ec, std::size_t len) mutable
+			{
+				if ((ec != boost::asio::error::message_size && ec)
+					|| _handle_capture(len))
+				{
+					handler(ec);
+				}
+				_start_async_capture(origin, std::move(handler));
+			});
+		}
+
+		bool _handle_capture(std::size_t len)
+		{
+			return multicast_protocol::parse_scan_message(_recvBuffer.cbegin(), _recvBuffer.cbegin() + len, _token);
+		}
 	private:
 		const std::string _identifier;
-
 		boost::asio::io_service::strand _sendStrand;
-
 		recvbuffer_type _recvBuffer;
-		endpoint_type _recvEndpoint;
 	};
 
 	typedef basic_multicast_server<lan_discovery_content> multicast_server;

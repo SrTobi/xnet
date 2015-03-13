@@ -58,15 +58,35 @@ namespace xnet {
 		void scan()
 		{
 			boost::system::error_code ec;
-			scan(port, ec);
+			scan(ec);
 			boost::asio::detail::throw_error(ec);
 		}
 
 		boost::system::error_code scan(boost::system::error_code& ec)
 		{
-			auto message = _build_message(Command::Scan);
-			_socket.send(boost::asio::buffer(message), ec);
+			auto message = multicast_protocol::build_scan_message(_token);
+			_socket.send_to(boost::asio::buffer(message), _multicastEndpoint, 0, ec);
 			return ec;
+		}
+		
+		template<typename AnnounceHandler>
+		BOOST_ASIO_INITFN_RESULT_TYPE(AnnounceHandler,
+			void(boost::system::error_code))
+			async_scan(BOOST_ASIO_MOVE_ARG(AnnounceHandler) handler)
+		{
+			boost::asio::detail::async_result_init<
+				AnnounceHandler, void(boost::system::error_code)> init(
+				BOOST_ASIO_MOVE_CAST(AnnounceHandler)(handler));
+
+			auto innerHandler = std::move(init.handler);
+			auto message = boost::make_shared<std::string>(multicast_protocol::build_message(_token, _identifier, multicast_protocol::Command::Announce));
+			_socket.async_send_to(boost::asio::buffer(*message), _multicastEndpoint, _sendStrand.wrap(
+				[innerHandler, message](const boost::system::error_code& ec, std::size_t sendLen) mutable
+			{
+				innerHandler(ec);
+			}));
+
+			return init.result.get();
 		}
 		
 		result discover()
@@ -127,10 +147,8 @@ namespace xnet {
 
 		bool _handle_receive(std::size_t len, result& res)
 		{
-			multicast_protocol::Command c;
 			res = result(_recvEndpoint);
-			return (multicast_protocol::parse_message(_recvBuffer.cbegin(), _recvBuffer.cbegin() + len, _token, res._identifier, c, res._content)
-				&& c == multicast_protocol::Command::Announce);
+			return multicast_protocol::parse_announce_message(_recvBuffer.cbegin(), _recvBuffer.cbegin() + len, _token, res._identifier, res._content);
 		}
 
 	private:

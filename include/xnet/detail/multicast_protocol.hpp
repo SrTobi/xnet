@@ -17,7 +17,7 @@ namespace xnet {
 
 			enum class Command : char
 			{
-				Scan = 'd',		// Scan for other peers without sending own informations
+				Scan = 's',		// Scan for other peers without sending own informations
 				Announce = 'a'	// inform peer about us (expect no answer)
 			};
 
@@ -91,46 +91,54 @@ namespace xnet {
 			}
 
 			template<typename Iter>
-			static bool parse_message(Iter begin, Iter end, const std::string& expToken, std::string& id, Command& cmd, content_type& content)
+			static bool parse_announce_message(Iter begin, Iter end, const std::string& expToken, std::string& id, content_type& content)
 			{
-				static boost::regex messageHeaderFormat("(?<token>[[:alpha:]]+);(?<id>\\d{1,20});(?<cmd>d|a);(?<content>.*)");
 				boost::match_results<Iter> matches;
-				if (!boost::regex_match(begin, end, matches, messageHeaderFormat))
-					return false;
-
-				const std::string token = matches["token"];
-				id = matches["id"];
-
-				if (token != expToken)
-					return false;
-
-				switch (*matches["cmd"].first)
+				if (!_parse_message(begin, end, expToken, matches))
 				{
-				case static_cast<char>(Command::Scan) :
-					cmd = Command::Scan;
-					break;
-				case static_cast<char>(Command::Announce):
-					cmd = Command::Announce;
-					break;
-				default:
-					BOOST_ASSERT(false);
+					return false;
 				}
+
+				if (*matches["cmd"].first != static_cast<char>(Command::Announce))
+					return false;
+
+				id = matches["id"];
 
 				auto& contentMatch = matches["content"];
 				return content.deserialize(contentMatch.first, contentMatch.second);
 			}
 
-			static std::string build_message(const std::string& token, const std::string& id, Command cmd)
+			template<typename Iter>
+			static bool parse_scan_message(Iter begin, Iter end, const std::string& expToken)
 			{
-				return token + ';' + id + ";" + static_cast<char>(cmd) + ";";
+				boost::match_results<Iter> matches;
+				return _parse_message(begin, end, expToken, matches)
+					&& *matches["cmd"].first == static_cast<char>(Command::Scan);
 			}
 
-			static std::string build_message(const std::string& token, const std::string& id, Command cmd, const content_type& content)
+			static std::string build_scan_message(const std::string& token)
 			{
-				return token + ';' + id + ";" + static_cast<char>(cmd) + ";" + content.serialize();
+				return token + ";0;" + static_cast<char>(Command::Scan) + ";";
+			}
+
+			static std::string build_announce_message(const std::string& token, const std::string& id, const content_type& content)
+			{
+				return token + ';' + id + ";" + static_cast<char>(Command::Announce) + ";" + content.serialize();
 			}
 
 		private:
+			template<typename Iter>
+			static bool _parse_message(Iter begin, Iter end, const std::string& expToken, boost::match_results<Iter>& matches)
+			{
+				static boost::regex messageHeaderFormat("(?<token>[[:alpha:]]+);(?<id>\\d{1,20});(?<cmd>s|a);(?<content>.*)");
+				if (!boost::regex_match(begin, end, matches, messageHeaderFormat))
+					return false;
+
+				const std::string token = matches["token"];
+
+				return token == expToken;
+			}
+
 			static std::default_random_engine _build_random_engine(const std::string& token)
 			{
 				typedef std::default_random_engine::result_type seed_type;
