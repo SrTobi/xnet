@@ -79,20 +79,17 @@ namespace xnet {
 
 		result discover(boost::system::error_code& ec)
 		{
+			result res;
+			bool ok;
 			do {
 				auto len = _socket.receive_from(boost::asio::buffer(_recvBuffer), _recvEndpoint, 0, ec);
-				std::cout << "something!" << std::endl;
-				XNET_RETURN_ON_ERROR(ec, result());
+				XNET_RETURN_ON_ERROR(ec, res);
 
-				multicast_protocol::Command c;
-				result res(_recvEndpoint);
-				if (multicast_protocol::parse_message(_recvBuffer.cbegin(), _recvBuffer.cbegin() + len, _token, res._identifier, c, res._content)
-					&& c == multicast_protocol::Command::Announce)
-				{
-					return res;
-				}
+				ok = _handle_receive(len, res);
 
-			} while (true);
+			} while (!ok);
+
+			return res;
 		}
 
 		template<typename DiscoverHandler>
@@ -104,9 +101,36 @@ namespace xnet {
 				DiscoverHandler, void(boost::system::error_code, result)> init(
 				BOOST_ASIO_MOVE_CAST(DiscoverHandler)(handler));
 
-			//_async_search(init.handler);
+			_start_async_discover(std::move(init.handler));
 
 			return init.result.get();
+		}
+
+	private:
+		template<typename Handler>
+		void _start_async_discover(Handler handler)
+		{
+			_socket.async_receive_from(boost::asio::buffer(_recvBuffer), _recvEndpoint, 
+				[handler, this](const boost::system::error_code& ec, std::size_t len) mutable
+			{
+				if(ec != boost::asio::error::message_size)
+				{
+					result res;
+					if (ec || _handle_receive(len, res))
+					{
+						handler(ec, res);
+					}
+				}
+				_start_async_discover(std::move(handler));
+			});
+		}
+
+		bool _handle_receive(std::size_t len, result& res)
+		{
+			multicast_protocol::Command c;
+			res = result(_recvEndpoint);
+			return (multicast_protocol::parse_message(_recvBuffer.cbegin(), _recvBuffer.cbegin() + len, _token, res._identifier, c, res._content)
+				&& c == multicast_protocol::Command::Announce);
 		}
 
 	private:
