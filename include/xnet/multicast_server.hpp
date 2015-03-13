@@ -18,6 +18,7 @@ namespace xnet {
 		typedef boost::asio::ip::udp	protocol_type;
 		typedef protocol_type::socket	socket_type;
 		typedef protocol_type::endpoint endpoint;
+		typedef uint64_t				id_type;
 	private:
 		typedef std::array<char, 2048> recvbuffer_type;
 	public:
@@ -25,6 +26,7 @@ namespace xnet {
 			: basic_multicast_base(service, token)
 			, _identifier(_create_random_identifier())
 			, _sendStrand(service)
+			, _identifierString(std::to_string(_identifier))
 		{
 		}
 
@@ -41,7 +43,7 @@ namespace xnet {
 
 		boost::system::error_code announce(const content_type& content, boost::system::error_code& ec)
 		{
-			auto message = multicast_protocol::build_announce_message(_token, _identifier, content);
+			auto message = multicast_protocol::build_announce_message(_token, _identifierString, content);
 			_socket.send_to(boost::asio::buffer(message), _multicastEndpoint, 0, ec);
 			return ec;
 		}
@@ -56,7 +58,7 @@ namespace xnet {
 				BOOST_ASIO_MOVE_CAST(AnnounceHandler)(handler));
 
 			auto innerHandler = std::move(init.handler);
-			auto message = boost::make_shared<std::string>(multicast_protocol::build_announce_message(_token, _identifier, content));
+			auto message = boost::make_shared<std::string>(multicast_protocol::build_announce_message(_token, _identifierString, content));
 			_socket.async_send_to(boost::asio::buffer(*message), _multicastEndpoint, _sendStrand.wrap(
 				[innerHandler, message](const boost::system::error_code& ec, std::size_t sendLen) mutable
 			{
@@ -102,19 +104,17 @@ namespace xnet {
 
 			return init.result.get();
 		}
+
+		id_type identifier() const { return _identifier; }
 	private:
-		static std::string _create_random_identifier()
+		static id_type _create_random_identifier()
 		{
 			typedef uint64_t idnum_type;
 			auto maxIdNum = std::numeric_limits<idnum_type>::max();
 			std::uniform_int_distribution<uint64_t> id_distribution(1, maxIdNum);
 			auto seed = static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count());
 			std::default_random_engine engine(seed);
-			auto numId = id_distribution(engine);
-
-			auto idString = std::to_string(numId);
-			BOOST_ASSERT(idString.size() <= 20);
-			return idString;
+			return id_distribution(engine);
 		}
 
 		template<typename Handler>
@@ -137,7 +137,8 @@ namespace xnet {
 			return multicast_protocol::parse_scan_message(_recvBuffer.cbegin(), _recvBuffer.cbegin() + len, _token);
 		}
 	private:
-		const std::string _identifier;
+		const id_type _identifier;
+		const std::string _identifierString;
 		boost::asio::io_service::strand _sendStrand;
 		recvbuffer_type _recvBuffer;
 	};
