@@ -57,11 +57,11 @@ namespace xnet {
 
 			auto innerHandler = std::move(init.handler);
 			auto message = boost::make_shared<std::string>(multicast_protocol::build_message(_token, _identifier, multicast_protocol::Command::Announce, content));
-			_socket.async_send(boost::asio::buffer(*message),
+			_socket.async_send_to(boost::asio::buffer(*message), _multicastEndpoint, _sendStrand.wrap(
 				[innerHandler, message](const boost::system::error_code& ec, std::size_t sendLen) mutable
 			{
 				innerHandler(ec);
-			});
+			}));
 
 			return init.result.get();
 		}
