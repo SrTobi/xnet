@@ -14,8 +14,6 @@ using namespace xnet;
 
 void start_client()
 {
-
-
 	try {
 		asio::io_service service;
 		//asio::io_service::work work(service);
@@ -113,7 +111,9 @@ int main()
 			break;
 		}
 	}
+#ifdef WIN32
 	std::cin.get();
+#endif
 
 	return 0;
 }
