@@ -6,7 +6,7 @@
 #include <chrono>
 #include <boost/make_shared.hpp>
 #include "multicast_base.hpp"
-#include "lan_discovery_content.hpp"
+#include "multicast_string_content.hpp"
 
 namespace xnet {
 
@@ -142,7 +142,7 @@ namespace xnet {
 		recvbuffer_type _recvBuffer;
 	};
 
-	typedef basic_multicast_server<lan_discovery_content> multicast_server;
+	typedef basic_multicast_server<multicast_string_content> multicast_server;
 }
 
 

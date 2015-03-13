@@ -4,7 +4,7 @@
 
 
 #include "multicast_base.hpp"
-#include "lan_discovery_content.hpp"
+#include "multicast_string_content.hpp"
 
 namespace xnet {
 
@@ -158,7 +158,7 @@ namespace xnet {
 		endpoint_type _recvEndpoint;
 	};
 
-	typedef basic_multicast_client<lan_discovery_content> multicast_client;
+	typedef basic_multicast_client<multicast_string_content> multicast_client;
 }
 
 

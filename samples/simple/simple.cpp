@@ -32,7 +32,7 @@ void start_client()
 
 		std::function<void(const boost::system::error_code&, const multicast_client::result&)> func = [&](const boost::system::error_code& ec, const multicast_client::result& result)
 		{
-			std::cout << "Message: " << result.content().message() << std::endl;
+			std::cout << "Message: " << result.content().value() << std::endl;
 			client.async_discover(func);
 		};
 		client.async_discover(func);
@@ -61,7 +61,7 @@ void start_server()
 
 		std::cout << "Server target: " << server.multicast_endpoint() << std::endl;
 
-		lan_discovery_content ldc("a simple tests");
+		multicast_string_content ldc("a simple tests");
 		server.announce(ldc);
 		//auto result = client.discover();
 
@@ -83,7 +83,7 @@ void start_server()
 		server.async_capture(origin, func);
 
 		service.run();
-		//std::cout << "[" << result.origin() << "]: " << result.content().message();
+		//std::cout << "[" << result.origin() << "]: " << result.content().value();
 	}
 	catch (const std::exception& e)
 	{
@@ -110,12 +110,12 @@ void start_both()
 
 		std::function<void(const boost::system::error_code&, const multicast_client::result&)> func = [&](const boost::system::error_code& ec, const multicast_client::result& result)
 		{
-			std::cout << result.content().message() << std::endl;
+			std::cout << result.content().value() << std::endl;
 			client.async_discover(func);
 		};
 		client.async_discover(func);
 
-		server.async_announce(lan_discovery_content("a simple tests"), asio::use_future);
+		server.async_announce(multicast_string_content("a simple tests"), asio::use_future);
 		service.run();
 	}
 	catch (const std::exception& e)
