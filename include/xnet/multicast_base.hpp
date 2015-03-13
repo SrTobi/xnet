@@ -25,10 +25,10 @@ namespace xnet {
 		typedef detail::multicast_protocol<content_type> multicast_protocol;
 
 	public:
-		basic_multicast_base(boost::asio::io_service& service, const std::string& token)
+		basic_multicast_base(boost::asio::io_service& service, const std::string& recognitionToken)
 			: _service(service)
 			, _socket(service)
-			, _token(token)
+			, _token(recognitionToken)
 		{
 		}
 
@@ -144,10 +144,12 @@ namespace xnet {
 			return _socket.close(ec);
 		}
 
+		boost::asio::io_service& io_service() const { return _service; }
 		socket_type& underlying_socket() { return _socket; }
 		const socket_type& underlying_socket() const { return _socket; }
 		const endpoint& multicast_endpoint() const { return _multicastEndpoint; }
 
+		const std::string& recognition_token() const { return _token; }
 	protected:
 		const std::string _token;
 		boost::asio::io_service& _service;
