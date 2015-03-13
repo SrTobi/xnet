@@ -139,6 +139,7 @@ namespace xnet {
 					if (ec || _handle_receive(len, res))
 					{
 						handler(ec, res);
+						return;
 					}
 				}
 				_start_async_discover(std::move(handler));

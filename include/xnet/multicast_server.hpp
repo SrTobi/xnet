@@ -113,7 +113,8 @@ namespace xnet {
 			auto maxIdNum = std::numeric_limits<idnum_type>::max();
 			std::uniform_int_distribution<uint64_t> id_distribution(1, maxIdNum);
 			auto seed = static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count());
-			std::default_random_engine engine(seed);
+
+			static std::ranlux48_base engine(seed);
 			return id_distribution(engine);
 		}
 
@@ -127,6 +128,7 @@ namespace xnet {
 					|| _handle_capture(len))
 				{
 					handler(ec);
+					return;
 				}
 				_start_async_capture(origin, std::move(handler));
 			});
