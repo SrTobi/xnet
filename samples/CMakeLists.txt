@@ -22,3 +22,4 @@ endmacro(add_sample)
 
 add_sample(multicaster)
 add_sample(network_interface_lister)
+add_sample(packaging)
