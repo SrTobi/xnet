@@ -5,6 +5,8 @@
 #include <xnet/serialization/serializer.hpp>
 #include <xnet/serialization/formats/text_sink.hpp>
 #include <xnet/serialization/split.hpp>
+#include <xnet/serialization/formats/generic_sink.hpp>
+#include <xnet/serialization/formats/generic_source.hpp>
 
 struct Point
 {
@@ -14,23 +16,11 @@ struct Point
 	template<typename S>
 	void serialize(S& s)
 	{
-		xnet::serialization::split_this(this, s);
-	}
-
-	template<typename S>
-	void save(S& s) const
-	{
-		s << x << y;
-	}
-
-	template<typename S>
-	void load(S& s)
-	{
-		s >> x >> y;
+		s & xnet::tagval("x", x) & xnet::tagval("y", y);
 	}
 };
 
-template<typename S>
+/*template<typename S>
 void serialize(S& s, Point& p)
 {
 	//s & p.x & p.y;
@@ -47,7 +37,7 @@ template<typename S>
 void load(S& s, Point& p)
 {
 	s >> p.x >> p.y;
-}
+}*/
 
 
 int main()
@@ -84,50 +74,5 @@ int main()
 	std::cin.get();
 #endif
 
-	return 0;
-}
-
-
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-
-class gps_position
-{
-public:
-	int degrees;
-	int minutes;
-	float seconds;
-	gps_position(){};
-	gps_position(int d, int m, float s) :
-		degrees(d), minutes(m), seconds(s)
-	{}
-};
-
-namespace boost {
-namespace serialization {
-
-template<class Archive>
-void serialize(Archive & ar, gps_position & g, const unsigned int version)
-{
-	ar & g.degrees;
-	ar & g.minutes;
-	ar & g.seconds;
-}
-
-} // namespace serialization
-} // namespace boost
-
-
-int main2() {
-	// create class instance
-	const gps_position g(35, 59, 24.567f);
-
-	// save data to archive
-	{
-		boost::archive::text_oarchive oa(std::cout);
-		// write class instance to archive
-		oa << g;
-		// archive and stream closed when destructors are called
-	}
 	return 0;
 }

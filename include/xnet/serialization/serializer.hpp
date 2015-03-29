@@ -37,16 +37,22 @@ namespace xnet {
 				serialize(*this, const_cast<T&>(in));
 			}
 
-			void _save(const std::string& in)
+			template<typename T>
+			void _save(const detail::tagged_value<T>& taggedVal)
 			{
-				_sink.save(in);
+				_save_tagged_value(taggedVal.value(), taggedVal.name());
 			}
 
-			void _save(const int in)
+			template<typename T>
+			void _save_tagged_value(const T& out, const char* tag)
 			{
-				_sink.save(in);
+				_source.begin_element(tag);
+				serialize(*this, out);
+				_source.end_element(tag);
 			}
 
+			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save, { _sink.save(in); }, in)
+			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save_tagged_value, { _sink.save(out, tag); }, out, const char* tag)
 		private:
 			Sink& _sink;
 		};

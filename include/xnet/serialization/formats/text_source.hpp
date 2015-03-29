@@ -22,6 +22,20 @@ namespace xnet {
 				_stream >> out;
 			}
 
+			template<typename T>
+			void load(T& out, const char* tag)
+			{
+				load(out);
+			}
+
+			void begin_element(const char*)
+			{
+			}
+
+			void end_element(const char*)
+			{
+			}
+
 		private:
 			std::istream& _stream;
 		};

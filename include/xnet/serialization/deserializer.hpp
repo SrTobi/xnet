@@ -2,7 +2,7 @@
 #ifndef _XNET_SERIALIZATION_DESERIALIZER_HPP
 #define _XNET_SERIALIZATION_DESERIALIZER_HPP
 
-
+#include "detail/primitive_operations.hpp"
 #include "serialization.hpp"
 
 namespace xnet {
@@ -34,18 +34,27 @@ namespace xnet {
 			template<typename T>
 			void _load(T& out)
 			{
+				_source.begin_element(nullptr);
 				serialize(*this, out);
+				_source.end_element(nullptr);
 			}
 
-			void _load(std::string& out)
+			template<typename T>
+			void _load(detail::tagged_value<T>& taggedVal)
 			{
-				_source.load(out);
+				_load_tagged_value(taggedVal.value(), taggedVal.name());
 			}
 
-			void _load(int& out)
+			template<typename T>
+			void _load_tagged_value(T& out, const char* tag)
 			{
-				_source.load(out);
+				_source.begin_element(tag);
+				serialize(*this, out);
+				_source.end_element(tag);
 			}
+
+			XNET_DETAIL_PRIMITIVE_LOAD_OPERATIONS(inline void _load, { _source.load(out); }, out)
+			XNET_DETAIL_PRIMITIVE_LOAD_OPERATIONS(inline void _load_tagged_value, { _source.load(out, tag); }, out, const char* tag)
 
 		private:
 			Source& _source;

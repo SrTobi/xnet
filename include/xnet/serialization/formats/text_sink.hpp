@@ -22,6 +22,20 @@ namespace xnet {
 				_stream << in << ' ';
 			}
 
+			template<typename T>
+			void save(const T& in, const char* tag)
+			{
+				save(in);
+			}
+
+			void begin_element(const char*)
+			{
+			}
+
+			void end_element(const char*)
+			{
+			}
+
 		private:
 			std::ostream& _stream;
 		};
