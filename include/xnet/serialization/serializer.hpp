@@ -23,24 +23,24 @@ namespace xnet {
 			}
 
 			template<typename T>
-			serializer& operator & (const T& in)
+			serializer& operator & (const T& out)
 			{
-				_save(in);
+				_save(out);
 				return *this;
 			}
 
 			template<typename T>
-			serializer& operator << (const T& in)
+			serializer& operator << (const T& out)
 			{
-				_save(in);
+				_save(out);
 				return *this;
 			}
 		private:
 			template<typename T>
-			void _save(const T& in)
+			void _save(const T& out)
 			{
 				_sink.begin_element(nullptr);
-				serialize(*this, const_cast<T&>(in));
+				_serialize(out);
 				_sink.end_element(nullptr);
 			}
 
@@ -54,12 +54,18 @@ namespace xnet {
 			void _save_tagged_value(const T& out, const char* tag)
 			{
 				_sink.begin_element(tag);
-				serialize(*this, out);
+				_serialize(out);
 				_sink.end_element(tag);
 			}
 
-			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save, { _sink.save(in); }, in)
-			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save_tagged_value, { _sink.save(out, tag); }, out, const char* tag)
+			template<typename T>
+			void _serialize(const T& out)
+			{
+				serialize(*this, const_cast<T&>(out));
+			}
+
+			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save, { _sink.save(out); }, out)
+			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save_tagged_value, { _sink.save(int, tag); }, out, const char* tag)
 		private:
 			Sink& _sink;
 		};

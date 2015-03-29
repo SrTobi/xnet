@@ -17,37 +17,37 @@ namespace xnet {
 			template<typename Serializer, typename T>
 			friend void serialize(detail::serializer_base<Serializer>& , T&);
 			template<typename Sink, typename T>
-			friend void save(detail::serializer_base<serializer<Sink>>& s, const T& in);
+			friend void save(detail::serializer_base<serializer<Sink>>& s, const T& out);
 			template<typename Source, typename T>
-			friend void load(detail::serializer_base<deserializer<Source>>& s, T& out);
+			friend void load(detail::serializer_base<deserializer<Source>>& s, T& in);
 			template<typename Sink, typename T>
-			friend void split_this(const T* in, serializer<Sink>& s);
+			friend void split_this(const T* out, serializer<Sink>& s);
 			template<typename Source, typename T>
-			friend void split_this(T* out, deserializer<Source>& s);
+			friend void split_this(T* in, deserializer<Source>& s);
 		private:
 
 			template<typename Sink, typename T>
-			static void _call_serialize(serializer<Sink>& s, const T& in)
+			static void _call_serialize(serializer<Sink>& s, const T& out)
 			{
-				const_cast<T&>(in).serialize(s);
+				const_cast<T&>(out).serialize(s);
 			}
 
 			template<typename Source, typename T>
-			static void _call_serialize(deserializer<Source>& s, T& out)
+			static void _call_serialize(deserializer<Source>& s, T& in)
 			{
-				out.serialize(s);
+				in.serialize(s);
 			}
 
 			template<typename Sink, typename T>
-			static void _call_save(serializer<Sink>& s, const T& in)
+			static void _call_save(serializer<Sink>& s, const T& out)
 			{
-				in.save(s);
+				out.save(s);
 			}
 
 			template<typename Source, typename T>
-			static void _call_load(deserializer<Source>& s, T& out)
+			static void _call_load(deserializer<Source>& s, T& in)
 			{
-				out.load(s);
+				in.load(s);
 			}
 		};
 	}

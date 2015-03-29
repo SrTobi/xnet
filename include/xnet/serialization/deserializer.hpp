@@ -18,24 +18,24 @@ namespace xnet {
 			}
 
 			template<typename T>
-			deserializer& operator & (T& out)
+			deserializer& operator & (T& in)
 			{
-				_load(out);
+				_load(in);
 				return *this;
 			}
 
 			template<typename T>
-			deserializer& operator >> (T& out)
+			deserializer& operator >> (T& in)
 			{
-				_load(out);
+				_load(in);
 				return *this;
 			}
 		private:
 			template<typename T>
-			void _load(T& out)
+			void _load(T& in)
 			{
 				_source.begin_element(nullptr);
-				serialize(*this, out);
+				serialize(*this, in);
 				_source.end_element(nullptr);
 			}
 
@@ -46,15 +46,15 @@ namespace xnet {
 			}
 
 			template<typename T>
-			void _load_tagged_value(T& out, const char* tag)
+			void _load_tagged_value(T& in, const char* tag)
 			{
 				_source.begin_element(tag);
-				serialize(*this, out);
+				serialize(*this, in);
 				_source.end_element(tag);
 			}
 
-			XNET_DETAIL_PRIMITIVE_LOAD_OPERATIONS(inline void _load, { _source.load(out); }, out)
-			XNET_DETAIL_PRIMITIVE_LOAD_OPERATIONS(inline void _load_tagged_value, { _source.load(out, tag); }, out, const char* tag)
+			XNET_DETAIL_PRIMITIVE_LOAD_OPERATIONS(inline void _load, { _source.load(in); }, in)
+			XNET_DETAIL_PRIMITIVE_LOAD_OPERATIONS(inline void _load_tagged_value, { _source.load(in, tag); }, in, const char* tag)
 
 		private:
 			Source& _source;

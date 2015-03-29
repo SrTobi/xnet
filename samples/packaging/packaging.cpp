@@ -24,7 +24,7 @@ struct Point
 	}
 };
 
-/*template<typename S>
+template<typename S>
 void serialize(S& s, Point& p)
 {
 	//s & p.x & p.y;
@@ -41,7 +41,7 @@ template<typename S>
 void load(S& s, Point& p)
 {
 	s >> p.x >> p.y;
-}*/
+}
 
 
 int main()
