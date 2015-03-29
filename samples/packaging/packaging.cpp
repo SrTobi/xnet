@@ -7,6 +7,9 @@
 #include <xnet/serialization/split.hpp>
 #include <xnet/serialization/formats/generic_sink.hpp>
 #include <xnet/serialization/formats/generic_source.hpp>
+#include <xnet/serialization/formats/xml_sink.hpp>
+
+#include <xnet/detail/rapidxml/rapidxml_print.hpp>
 
 struct Point
 {
@@ -16,7 +19,8 @@ struct Point
 	template<typename S>
 	void serialize(S& s)
 	{
-		s & xnet::tagval("x", x) & xnet::tagval("y", y);
+		XNET_CURRENT_TYPE(s, *this, Point);
+		s & XNET_TAGVAL(x) & XNET_TAGVAL(y);
 	}
 };
 
@@ -44,7 +48,21 @@ int main()
 {
 
 	std::string buf;
+	rapidxml::xml_document<> doc;
+	auto root = doc.allocate_node(rapidxml::node_element, "package");
+	doc.append_node(root);
+
 	{
+		typedef xnet::serialization::xml_sink xmls;
+		xmls sink(&doc, root);
+		xnet::serialization::serializer<xmls> s(sink);
+
+		Point p{ 13, 19 };
+		s << XNET_TAGVAL(p);
+	}
+	rapidxml::print(std::cout, doc);
+
+	/*{
 		std::ostringstream oss(buf);
 
 		typedef xnet::serialization::text_sink<char> ts;
@@ -56,9 +74,8 @@ int main()
 		buf = oss.str();
 	}
 
-	std::cout << buf << std::endl;
 
-	{
+	/*{
 		std::istringstream iss(buf);
 
 		typedef xnet::serialization::text_source<char> ts;
@@ -67,7 +84,7 @@ int main()
 
 		Point p;
 		des >> p;
-	}
+	}*/
 
 
 #ifdef WIN32

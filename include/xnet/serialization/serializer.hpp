@@ -17,6 +17,11 @@ namespace xnet {
 			{
 			}
 
+			void current_type(const char* type)
+			{
+				_sink.set_current_type(type);
+			}
+
 			template<typename T>
 			serializer& operator & (const T& in)
 			{
@@ -34,7 +39,9 @@ namespace xnet {
 			template<typename T>
 			void _save(const T& in)
 			{
+				_sink.begin_element(nullptr);
 				serialize(*this, const_cast<T&>(in));
+				_sink.end_element(nullptr);
 			}
 
 			template<typename T>
@@ -46,9 +53,9 @@ namespace xnet {
 			template<typename T>
 			void _save_tagged_value(const T& out, const char* tag)
 			{
-				_source.begin_element(tag);
+				_sink.begin_element(tag);
 				serialize(*this, out);
-				_source.end_element(tag);
+				_sink.end_element(tag);
 			}
 
 			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save, { _sink.save(in); }, in)

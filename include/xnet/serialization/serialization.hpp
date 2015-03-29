@@ -23,7 +23,11 @@ namespace xnet {
 		}
 	}
 
-	using serialization::tagval;
+#define XNET_TAGVAL(v) ::xnet::serialization::tagval(#v, v)
+#define XNET_CURRENT_TYPE(s, this, ttype) {\
+	static_assert(std::is_same<std::remove_pointer<std::decay<decltype(this)>::type>::type, ttype>::value, "the given variable is not of the given type!"); \
+	s.current_type(#ttype); }
+
 }
 
 #endif
