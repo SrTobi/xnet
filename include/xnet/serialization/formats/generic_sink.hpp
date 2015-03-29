@@ -2,8 +2,6 @@
 #ifndef _XNET_SERIALIZATION_FORMATS_GENERIC_SINK_HPP
 #define _XNET_SERIALIZATION_FORMATS_GENERIC_SINK_HPP
 
-#include <cstddef>
-#include <string>
 #include "../detail/primitive_operations.hpp"
 
 namespace xnet {

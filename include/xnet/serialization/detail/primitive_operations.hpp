@@ -2,6 +2,9 @@
 #ifndef _XNET_SERIALIZATION_DETAIL_PRIMITIVE_OPERATIONS_HPP
 #define _XNET_SERIALIZATION_DETAIL_PRIMITIVE_OPERATIONS_HPP
 
+#include <cstddef>
+#include <string>
+
 #define XNET_DETAIL_PRIMITIVE_GENERIC_LOAD_OPERATIONS(funcdef, ref, preconst, body, ...) \
 			/* bool */\
 			funcdef(bool ref __VA_ARGS__) body; \
