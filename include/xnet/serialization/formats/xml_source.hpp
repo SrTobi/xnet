@@ -2,42 +2,39 @@
 #ifndef _XNET_SERIALIZATION_FORMATS_XML_SOURCE_HPP
 #define _XNET_SERIALIZATION_FORMATS_XML_SOURCE_HPP
 
-#include <istream>
+#include <boost/lexical_cast.hpp>
+#include "../../detail/rapidxml/rapidxml.hpp"
+#include "../detail/primitive_operations.hpp"
+#include "generic_source.hpp"
 
 namespace xnet {
 	namespace serialization {
 
-		template<typename Ch>
-		class text_source
+		class xml_source: public generic_source
 		{
 		public:
-			text_source(std::istream& stream)
-				: _stream(stream)
-			{
-			}
+			typedef rapidxml::xml_node<> xml_node;
 
-			template<typename T>
-			void load(T& out)
-			{
-				_stream >> out;
-			}
+			xml_source(xml_node* node);
 
-			template<typename T>
-			void load(T& out, const char* tag)
-			{
-				load(out);
-			}
+			void begin_element(const char* tag) override final;
+			void end_element(const char* tag) override final;
 
-			void begin_element(const char*)
-			{
-			}
+			bool begin_array(const char* tag, std::size_t& size) override final;
+			void end_array(const char* tag) override final;
 
-			void end_element(const char*)
-			{
-			}
+			void check_current_type(const char* tag) const override final;
+
+			XNET_DETAIL_PRIMITIVE_LOAD_OPERATIONS(virtual void load, override final, in);
+			XNET_DETAIL_PRIMITIVE_LOAD_OPERATIONS(virtual void load, override final, in, const char* tag);
+		private:
+			std::string _load(const char* type);
+			std::string _load(const char* type, const char* tag);
 
 		private:
-			std::istream& _stream;
+			xml_node* _rootNode;
+			xml_node* _elementNode;
+			xml_node* _currentNode;
 		};
 
 	}

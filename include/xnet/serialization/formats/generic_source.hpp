@@ -19,7 +19,7 @@ namespace xnet {
 			virtual bool begin_array(const char* tag, std::size_t& size) = 0;
 			virtual void end_array(const char* tag) = 0;
 
-			virtual const char* get_current_type() const = 0;
+			virtual void check_current_type(const char* tag) const = 0;
 		};
 
 	}

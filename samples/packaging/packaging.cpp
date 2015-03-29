@@ -8,7 +8,8 @@
 #include <xnet/serialization/formats/generic_sink.hpp>
 #include <xnet/serialization/formats/generic_source.hpp>
 #include <xnet/serialization/formats/xml_sink.hpp>
-
+#include <xnet/serialization/formats/xml_source.hpp>
+#include <xnet/serialization/serialization_error.hpp>
 #include <xnet/detail/rapidxml/rapidxml_print.hpp>
 
 struct Point
@@ -23,7 +24,7 @@ struct Point
 		s & XNET_TAGVAL(x) & XNET_TAGVAL(y);
 	}
 };
-
+/*
 template<typename S>
 void serialize(S& s, Point& p)
 {
@@ -41,7 +42,7 @@ template<typename S>
 void load(S& s, Point& p)
 {
 	s >> p.x >> p.y;
-}
+}*/
 
 
 int main()
@@ -61,6 +62,22 @@ int main()
 		s << XNET_TAGVAL(p);
 	}
 	rapidxml::print(std::cout, doc);
+
+	{
+		typedef xnet::serialization::xml_source xmls;
+		xmls source(root->first_node());
+		xnet::serialization::deserializer<xmls> s(source);
+
+		Point p {0, 0 };
+		try {
+			s >> XNET_TAGVAL(p);
+			std::cout << p.x << ", " << p.y << std::endl;
+		}
+		catch (xnet::serialization_error e)
+		{
+			std::cout << e.what() << std::endl;
+		}
+	}
 
 	/*{
 		std::ostringstream oss(buf);

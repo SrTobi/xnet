@@ -13,6 +13,7 @@ namespace xnet {
 		class xml_sink
 			: public generic_sink
 		{
+		public:
 			typedef rapidxml::xml_node<> xml_node;
 			typedef rapidxml::xml_document<> xml_document;
 		public:

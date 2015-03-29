@@ -65,7 +65,7 @@ namespace xnet {
 			}
 
 			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save, { _sink.save(out); }, out)
-			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save_tagged_value, { _sink.save(int, tag); }, out, const char* tag)
+			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save_tagged_value, { _sink.save(out, tag); }, out, const char* tag)
 		private:
 			Sink& _sink;
 		};

@@ -17,6 +17,11 @@ namespace xnet {
 			{
 			}
 
+			void current_type(const char* type)
+			{
+				_source.check_current_type(type);
+			}
+
 			template<typename T>
 			deserializer& operator & (T& in)
 			{
