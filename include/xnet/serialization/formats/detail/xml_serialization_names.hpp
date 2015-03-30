@@ -9,6 +9,8 @@ namespace xnet {
 			extern const char* PRIMITIVE_NAME;
 			extern const char* TAG_NAME;
 			extern const char* TYPE_NAME;
+			extern const char* SEQ_NAME;
+			extern const char* SIZE_NAME;
 		}
 	}
 }

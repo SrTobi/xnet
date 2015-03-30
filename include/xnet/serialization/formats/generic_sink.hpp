@@ -16,8 +16,8 @@ namespace xnet {
 			virtual void begin_element(const char* tag) = 0;
 			virtual void end_element(const char* tag) = 0;
 
-			virtual void begin_array(const char* tag, std::size_t size) = 0;
-			virtual void end_array(const char* tag) = 0;
+			virtual void begin_sequence_save(const char* tag, std::size_t size) = 0;
+			virtual void end_sequence_save(const char* tag) = 0;
 
 			virtual void set_current_type(const char* type) = 0;
 		};

@@ -13,6 +13,8 @@ namespace xnet {
 			const char* PRIMITIVE_NAME = "primitive";
 			const char* TAG_NAME = "tag";
 			const char* TYPE_NAME = "type";
+			const char* SEQ_NAME = "sequence";
+			const char* SIZE_NAME = "size";
 		}
 
 		bool equals(const char* left, const char* right)
@@ -51,6 +53,7 @@ namespace xnet {
 
 		void xml_source::end_element(const char* tag)
 		{
+			XNET_SERIALIZATION_CHECK(!_currentNode, "unserialized elements left in this element!");
 			XNET_SERIALIZATION_CHECK(_elementNode, "no element to end!");
 			_currentNode = _elementNode->next_sibling();
 			_elementNode = _elementNode->parent();
@@ -59,14 +62,52 @@ namespace xnet {
 				_elementNode = nullptr;
 		}
 
-		bool xml_source::begin_array(const char* tag, std::size_t& size)
+
+		void xml_source::begin_sequence_load(const char* tag, std::size_t& size)
 		{
-			return true;
+			XNET_SERIALIZATION_CHECK(_currentNode && equals(_currentNode->name(), detail::SEQ_NAME), "expected sequence!");
+			if (tag)
+			{
+				auto* attr = _currentNode->first_attribute(detail::TAG_NAME);
+				XNET_SERIALIZATION_CHECK(attr, "expected tag attribute");
+				XNET_SERIALIZATION_CHECK(equals(attr->value(), tag), std::string("wrong tag! expected tag '") + tag + "'");
+			}
+
+			// count children
+			{
+				size = 0;
+				for (auto* cur = _currentNode->first_node();
+					cur;
+					cur = cur->next_sibling())
+				{
+					++size;
+				}
+			}
+
+			// if a size attribute exists, check if it is correct
+			{
+				auto* attr = _currentNode->first_attribute(detail::SIZE_NAME);
+				if (attr)
+				{
+					auto sizeString = std::to_string(size);
+					XNET_SERIALIZATION_CHECK(rapidxml::internal::compare(sizeString.c_str(), sizeString.size(), attr->value(), attr->value_size(), true),
+						"the given sequence size is incorrect!");
+				}
+			}
+
+			_elementNode = _currentNode;
+			_currentNode = _elementNode->first_node();
 		}
 
-		void xml_source::end_array(const char* tag)
+		void xml_source::end_sequence_load(const char* tag)
 		{
+			XNET_SERIALIZATION_CHECK(!_currentNode, "unserialized elements left in this sequence!");
+			XNET_SERIALIZATION_CHECK(_elementNode, "no sequence to end!");
+			_currentNode = _elementNode->next_sibling();
+			_elementNode = _elementNode->parent();
 
+			if (_elementNode == _rootNode)
+				_elementNode = nullptr;
 		}
 
 		void xml_source::check_current_type(const char* type) const

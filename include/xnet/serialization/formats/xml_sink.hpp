@@ -22,8 +22,8 @@ namespace xnet {
 			void begin_element(const char* tag) override final;
 			void end_element(const char* tag) override final;
 
-			void begin_array(const char* tag, std::size_t size) override final;
-			void end_array(const char* tag) override final;
+			void begin_sequence_save(const char* tag, std::size_t size) override final;
+			void end_sequence_save(const char* tag) override final;
 
 			void set_current_type(const char* type) override final;
 

@@ -22,6 +22,18 @@ namespace xnet {
 				_source.check_current_type(type);
 			}
 
+			std::size_t begin_sequence_load(const char* tag)
+			{
+				std::size_t size = 0;
+				_source.begin_sequence_load(tag, size);
+				return size;
+			}
+
+			void end_sequence_load(const char* tag)
+			{
+				_source.end_sequence_load(tag);
+			}
+
 			template<typename T>
 			deserializer& operator & (T& in)
 			{

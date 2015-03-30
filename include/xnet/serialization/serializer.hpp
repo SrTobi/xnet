@@ -22,6 +22,16 @@ namespace xnet {
 				_sink.set_current_type(type);
 			}
 
+			void begin_sequence_save(const char* tag, std::size_t size)
+			{
+				_sink.begin_sequence_save(tag, size);
+			}
+
+			void end_sequence_save(const char* tag)
+			{
+				_sink.end_sequence_save(tag);
+			}
+
 			template<typename T>
 			serializer& operator & (const T& out)
 			{

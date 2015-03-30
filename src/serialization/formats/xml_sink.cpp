@@ -43,14 +43,40 @@ namespace xnet {
 			_currentNode = _currentNode->parent();
 		}
 
-		void xml_sink::begin_array(const char* tag, std::size_t size)
+		void xml_sink::begin_sequence_save(const char* tag, std::size_t size)
 		{
+			auto* newNode = _document->allocate_node(rapidxml::node_element, detail::SEQ_NAME);
+			_currentNode->append_node(newNode);
 
+			if (tag)
+			{
+				auto* attr = _document->allocate_attribute(detail::TAG_NAME, tag);
+				newNode->append_attribute(attr);
+			}
+			{
+				auto sizeString = std::to_string(size);
+				const char* str = _document->allocate_string(sizeString.c_str(), sizeString.size());
+				auto* attr = _document->allocate_attribute(detail::SIZE_NAME, str, 0, sizeString.size());
+				newNode->append_attribute(attr);
+			}
+
+
+			_currentNode = newNode;
 		}
 
-		void xml_sink::end_array(const char* tag)
+		void xml_sink::end_sequence_save(const char* tag)
 		{
-
+			{
+				auto* attr = _currentNode->first_attribute(detail::TAG_NAME);
+				BOOST_ASSERT(!attr == !tag);
+				if (tag)
+				{
+					BOOST_ASSERT(attr->value() == tag);
+				}
+				BOOST_ASSERT(_currentNode->name() == detail::SEQ_NAME);
+				BOOST_ASSERT(_currentNode->parent());
+			}
+			_currentNode = _currentNode->parent();
 		}
 
 		void xml_sink::set_current_type(const char* type)
