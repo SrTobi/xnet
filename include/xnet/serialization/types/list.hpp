@@ -20,6 +20,7 @@ namespace xnet {
 			void split_serialize_list(deserializer<Source>& s, std::list<T>& v)
 			{
 				auto size = s.begin_sequence_load(nullptr);
+				v.clear();
 				while(size--)
 				{
 					v.emplace_back();
