@@ -21,9 +21,9 @@ namespace xnet {
 			{
 				auto size = s.begin_sequence_load(nullptr);
 				v.clear();
+				T tmp;
 				while(size--)
 				{
-					T tmp;
 					s >> tmp;
 					v.insert(std::move(tmp));
 				}
