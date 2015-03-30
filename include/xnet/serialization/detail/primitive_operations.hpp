@@ -9,7 +9,7 @@
 			/* bool */\
 			funcdef(bool ref __VA_ARGS__) body; \
 			/* char types */ \
-			funcdef(signed char ref __VA_ARGS__) body;	\
+			funcdef(char ref __VA_ARGS__) body;	\
 			funcdef(unsigned char ref __VA_ARGS__) body; \
 			funcdef(wchar_t ref __VA_ARGS__) body; \
 			/* short */\

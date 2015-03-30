@@ -90,27 +90,29 @@ namespace xnet {
 	MAKE_SAVE(type, typeName, const auto value = boost::locale::conv::utf_to_utf<char>(out);)
 
 		MAKE_NUMERIC_SAVE(bool)
-			MAKE_NUMERIC_SAVE(signed char)
-			MAKE_NUMERIC_SAVE(unsigned char)
-			//MAKE_NUMERIC_SAVE(wchar_t)
-			MAKE_NUMERIC_SAVE(signed short)
-			MAKE_NUMERIC_SAVE(unsigned short)
-			MAKE_NUMERIC_SAVE(signed int)
-			MAKE_NUMERIC_SAVE(unsigned int)
-			MAKE_NUMERIC_SAVE(signed long)
-			MAKE_NUMERIC_SAVE(unsigned long)
-			MAKE_NUMERIC_SAVE(float)
-			MAKE_NUMERIC_SAVE(double)
-			MAKE_NUMERIC_SAVE(long double)
+		MAKE_NUMERIC_SAVE(char)
+		MAKE_SAVE(unsigned char, "byte",
+			unsigned short value = out;
+		)
+		//MAKE_NUMERIC_SAVE(wchar_t)
+		MAKE_NUMERIC_SAVE(short)
+		MAKE_NUMERIC_SAVE(unsigned short)
+		MAKE_NUMERIC_SAVE(int)
+		MAKE_NUMERIC_SAVE(unsigned int)
+		MAKE_NUMERIC_SAVE(long)
+		MAKE_NUMERIC_SAVE(unsigned long)
+		MAKE_NUMERIC_SAVE(float)
+		MAKE_NUMERIC_SAVE(double)
+		MAKE_NUMERIC_SAVE(long double)
 
-			MAKE_SAVE(wchar_t, "wchar_t",
+		MAKE_SAVE(wchar_t, "wchar_t",
 			auto value = boost::locale::conv::utf_to_utf<char>(std::wstring(1, out));
 		)
 
-			MAKE_SAVE(const std::string&, "std::string",
+		MAKE_SAVE(const std::string&, "std::string",
 			const auto& value = out;
 		)
-			MAKE_LITERAL_SAVE(const std::wstring&, "std::wstring");
+		MAKE_LITERAL_SAVE(const std::wstring&, "std::wstring");
 		MAKE_LITERAL_SAVE(const std::u16string&, "std::16string");
 		MAKE_LITERAL_SAVE(const std::u32string&, "std::32string");
 		MAKE_LITERAL_SAVE(const char*, "char*");

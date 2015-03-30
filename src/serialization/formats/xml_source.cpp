@@ -52,7 +52,7 @@ namespace xnet {
 		void xml_source::end_element(const char* tag)
 		{
 			XNET_SERIALIZATION_CHECK(_elementNode, "no element to end!");
-			_currentNode = _elementNode;
+			_currentNode = _elementNode->next_sibling();
 			_elementNode = _elementNode->parent();
 
 			if (_elementNode == _rootNode)
@@ -120,14 +120,16 @@ namespace xnet {
 	MAKE_LOAD(type, #type, in = boost::locale::conv::utf_to_utf<type::value_type>(value);)
 
 		MAKE_NUMERIC_LOAD(bool)
-		MAKE_NUMERIC_LOAD(signed char)
-		MAKE_NUMERIC_LOAD(unsigned char)
+		MAKE_NUMERIC_LOAD(char)
+		MAKE_LOAD(unsigned char, "byte",
+			in = (unsigned char)boost::lexical_cast<unsigned short>(value)
+		)
 		//MAKE_NUMERIC_LOAD(wchar_t)
-		MAKE_NUMERIC_LOAD(signed short)
+		MAKE_NUMERIC_LOAD(short)
 		MAKE_NUMERIC_LOAD(unsigned short)
-		MAKE_NUMERIC_LOAD(signed int)
+		MAKE_NUMERIC_LOAD(int)
 		MAKE_NUMERIC_LOAD(unsigned int)
-		MAKE_NUMERIC_LOAD(signed long)
+		MAKE_NUMERIC_LOAD(long)
 		MAKE_NUMERIC_LOAD(unsigned long)
 		MAKE_NUMERIC_LOAD(float)
 		MAKE_NUMERIC_LOAD(double)
@@ -135,6 +137,7 @@ namespace xnet {
 
 		MAKE_LOAD(wchar_t, "wchar_t", 
 			auto tmp = boost::locale::conv::utf_to_utf<wchar_t>(value);
+			XNET_SERIALIZATION_CHECK(tmp.size() == 1, "failed to load wchar_t!");
 			in = tmp[0];
 		)
 
