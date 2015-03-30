@@ -11,17 +11,31 @@
 #include <xnet/serialization/formats/xml_source.hpp>
 #include <xnet/serialization/serialization_error.hpp>
 #include <xnet/detail/rapidxml/rapidxml_print.hpp>
+#include <xnet/serialization/types/enum.hpp>
+#include <xnet/serialization/types/pair.hpp>
+#include <xnet/serialization/types/tuple.hpp>
+
+enum class TestEnum: unsigned char
+{
+	A = 0,
+	B
+};
+
+XNET_SERIALIZATION_ENUM(TestEnum);
 
 struct Point
 {
 	int x;
 	int y;
+	TestEnum e;
+	std::pair<int, int> p;
+	std::tuple<char, int, std::string> t;
 
 	template<typename S>
 	void serialize(S& s)
 	{
 		XNET_CURRENT_TYPE(s, *this, Point);
-		s & XNET_TAGVAL(x) & XNET_TAGVAL(y);
+		s & XNET_TAGVAL(x) & XNET_TAGVAL(y) & XNET_TAGVAL(e) & XNET_TAGVAL(p) & XNET_TAGVAL(t);
 	}
 };
 /*
@@ -58,7 +72,7 @@ int main()
 		xmls sink(&doc, root);
 		xnet::serialization::serializer<xmls> s(sink);
 
-		Point p{ 13, 19 };
+		Point p{ 13, 19, TestEnum::B, std::make_pair(99, 100), std::make_tuple('a', 12, "test") };
 		s << XNET_TAGVAL(p);
 	}
 	rapidxml::print(std::cout, doc);
