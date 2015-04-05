@@ -34,5 +34,5 @@ buildx_target_includes(	TARGETS xnet
 							${XNET_EXPORT_API_DIR}
 						DESTINATION include/${XNET_VERSION_DIR})
 
-#buildx_add_external_test(external-test ${PROJECT_SOURCE_DIR}/tests/interface TEST_TARGETS xnet)
+buildx_add_external_test(external-test ${PROJECT_SOURCE_DIR}/tests/interface TEST_TARGETS xnet)
 #buildx_add_internal_test(internal-test ${PROJECT_SOURCE_DIR}/tests/internal TEST_TARGET xnet)

@@ -15,6 +15,13 @@
 #include <xnet/serialization/types/pair.hpp>
 #include <xnet/serialization/types/tuple.hpp>
 #include <xnet/serialization/types/vector.hpp>
+#include <xnet/serialization/types/list.hpp>
+#include <xnet/serialization/types/forward_list.hpp>
+#include <xnet/serialization/types/unordered_set.hpp>
+#include <xnet/serialization/types/unordered_map.hpp>
+#include <xnet/serialization/types/map.hpp>
+#include <xnet/serialization/types/array.hpp>
+
 
 enum class TestEnum: unsigned char
 {
@@ -31,13 +38,16 @@ struct Point
 	TestEnum e;
 	std::pair<int, int> p;
 	std::tuple<char, int, std::string> t;
-	std::vector<std::string> v;
+	std::forward_list<std::string> v;
+	std::unordered_set<std::string> mySet;
+	std::unordered_map<int, std::string> myMap;
+	std::array<int, 5> arr;
 
 	template<typename S>
 	void serialize(S& s)
 	{
 		XNET_CURRENT_TYPE(s, *this, Point);
-		s & XNET_TAGVAL(x) & XNET_TAGVAL(y) & XNET_TAGVAL(e) & XNET_TAGVAL(p) & XNET_TAGVAL(t) & XNET_TAGVAL(v);
+		s & XNET_TAGVAL(x) & XNET_TAGVAL(y) & XNET_TAGVAL(e) & XNET_TAGVAL(p) & XNET_TAGVAL(t) & XNET_TAGVAL(v) & XNET_TAGVAL(mySet) & XNET_TAGVAL(myMap) & XNET_TAGVAL(arr);
 	}
 };
 /*
@@ -74,7 +84,15 @@ int main()
 		xmls sink(&doc, root);
 		xnet::serialization::serializer<xmls> s(sink);
 
-		Point p{ 13, 19, TestEnum::B, std::make_pair(99, 100), std::make_tuple('a', 12, "test"), { "test", "abv", "oba" } };
+		Point p{ 13, 19,
+			TestEnum::B,
+			std::make_pair(99, 100),
+			std::make_tuple('a', 12, "test"),
+			{ "test", "abv", "oba" },
+			{ "b", "x", "a" },
+			{ std::make_pair(4, "aber"), std::make_pair(1, "doch") },
+			{1,2,3,4,5}
+		};
 		s << XNET_TAGVAL(p);
 	}
 	rapidxml::print(std::cout, doc);
