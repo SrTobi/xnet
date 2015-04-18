@@ -1,79 +1,39 @@
 #include <iostream>
 #include <sstream>
-#include <xnet/serialization/deserializer.hpp>
-#include <xnet/serialization/formats/text_source.hpp>
-#include <xnet/serialization/serializer.hpp>
-#include <xnet/serialization/formats/text_sink.hpp>
-#include <xnet/serialization/split.hpp>
-#include <xnet/serialization/formats/generic_sink.hpp>
-#include <xnet/serialization/formats/generic_source.hpp>
-#include <xnet/serialization/formats/xml_sink.hpp>
-#include <xnet/serialization/formats/xml_source.hpp>
-#include <xnet/serialization/serialization_error.hpp>
-#include <xnet/detail/rapidxml/rapidxml_print.hpp>
-#include <xnet/serialization/types/enum.hpp>
-#include <xnet/serialization/types/pair.hpp>
-#include <xnet/serialization/types/tuple.hpp>
-#include <xnet/serialization/types/vector.hpp>
-#include <xnet/serialization/types/list.hpp>
-#include <xnet/serialization/types/forward_list.hpp>
-#include <xnet/serialization/types/unordered_set.hpp>
-#include <xnet/serialization/types/unordered_map.hpp>
-#include <xnet/serialization/types/map.hpp>
-#include <xnet/serialization/types/array.hpp>
+#include "xnet/serialization/serialization.hpp"
+#include "xnet/package_factory.hpp"
 
-
-enum class TestEnum: unsigned char
-{
-	A = 0,
-	B
-};
-
-XNET_SERIALIZATION_ENUM(TestEnum);
 
 struct Point
 {
 	int x;
 	int y;
-	TestEnum e;
-	std::pair<int, int> p;
-	std::tuple<char, int, std::string> t;
-	std::forward_list<std::string> v;
-	std::unordered_set<std::string> mySet;
-	std::unordered_map<int, std::string> myMap;
-	std::array<int, 5> arr;
 
 	template<typename S>
 	void serialize(S& s)
 	{
 		XNET_CURRENT_TYPE(s, *this, Point);
-		s & XNET_TAGVAL(x) & XNET_TAGVAL(y) & XNET_TAGVAL(e) & XNET_TAGVAL(p) & XNET_TAGVAL(t) & XNET_TAGVAL(v) & XNET_TAGVAL(mySet) & XNET_TAGVAL(myMap) & XNET_TAGVAL(arr);
+		s & XNET_TAGVAL(x) & XNET_TAGVAL(y);
 	}
 };
-/*
-template<typename S>
-void serialize(S& s, Point& p)
-{
-	//s & p.x & p.y;
-	xnet::serialization::split(s, p);
-}
-
-template<typename S>
-void save(S& s, const Point& p)
-{
-	s << p.x << p.y;
-}
-
-template<typename S>
-void load(S& s, Point& p)
-{
-	s >> p.x >> p.y;
-}*/
 
 
 int main()
 {
+	xnet::package_factory fac;
 
+	Point p{ 1, 2 };
+
+	xnet::package pack = fac.make_package(p);
+	xnet::package pack2 = fac.make_package(p, pack);
+
+	{
+		xnet::package next;
+		Point p2 = xnet::unpack_package<Point>(pack2, next);
+		std::cout << p2.x << p2.y << std::endl;
+	}
+
+	/*
 	std::string buf;
 	rapidxml::xml_document<> doc;
 	auto root = doc.allocate_node(rapidxml::node_element, "package");
