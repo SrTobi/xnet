@@ -3,6 +3,7 @@
 #define _XNET_SERVICE_REMOTE_SERVICE_HPP
 
 #include <memory>
+#include "generic_service.hpp"
 #include "call_error.hpp"
 #include "../package.hpp"
 
@@ -11,6 +12,7 @@ namespace xnet {
 		template<typename Service>
 		class remote_service
 		{
+			static_assert(is_service<Service>::value, "Service must be a service!");
 		public:
 			remote_service()
 			{

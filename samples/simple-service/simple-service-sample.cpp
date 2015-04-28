@@ -5,6 +5,7 @@
 using xnet::service::remote_service;
 
 class ChatService
+	: public xnet::service::generic_service
 {
 public:
 	virtual std::string chat(const std::string& msg) = 0;
@@ -16,6 +17,7 @@ XNET_IMPLEMENT_SERVICE_DESCRIPTOR(ChatService, desc)
 }
 
 class LoginService
+	: public xnet::service::generic_service
 {
 public:
 	virtual remote_service<ChatService> login(std::string password) = 0;
