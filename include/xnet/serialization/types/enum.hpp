@@ -9,15 +9,15 @@
 namespace xnet {
 	namespace serialization {
 		namespace detail {
-			template<typename Sink, typename E>
-			void split_serialize_enum(serializer<Sink>& s, const E& e)
+			template<typename Sink, typename Context, typename E>
+			void split_serialize_enum(serializer<Sink, Context>& s, const E& e)
 			{
 				static_assert(std::is_enum<E>::value, "E is not an enum!");
 				s << std::underlying_type<E>::type(e);
 			}
 
-			template<typename Source, typename E>
-			void split_serialize_enum(deserializer<Source>& s, E& e)
+			template<typename Source, typename Context, typename E>
+			void split_serialize_enum(deserializer<Source, Context>& s, E& e)
 			{
 				static_assert(std::is_enum<E>::value, "E is not an enum!");
 				std::underlying_type<E>::type val;
