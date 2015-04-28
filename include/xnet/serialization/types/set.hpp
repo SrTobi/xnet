@@ -10,14 +10,14 @@
 namespace xnet {
 	namespace serialization {
 		namespace detail {
-			template<typename Sink, typename T, typename Comp, typename Alloc>
-			void split_serialize_set(serializer<Sink>& s, const std::set<T, Comp, Alloc>& v)
+			template<typename Sink, typename Context, typename T, typename Comp, typename Alloc>
+			void split_serialize_set(serializer<Sink, Context>& s, const std::set<T, Comp, Alloc>& v)
 			{
 				detail::save_sequence(s, v.begin(), v.end(), v.size(), nullptr);
 			}
 
-			template<typename Source, typename T, typename Comp, typename Alloc>
-			void split_serialize_set(deserializer<Source>& s, std::set<T, Comp, Alloc>& v)
+			template<typename Source, typename Context, typename T, typename Comp, typename Alloc>
+			void split_serialize_set(deserializer<Source, Context>& s, std::set<T, Comp, Alloc>& v)
 			{
 				auto size = s.begin_sequence_load(nullptr);
 				v.clear();

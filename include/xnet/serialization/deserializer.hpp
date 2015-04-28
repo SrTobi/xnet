@@ -2,20 +2,35 @@
 #ifndef _XNET_SERIALIZATION_DESERIALIZER_HPP
 #define _XNET_SERIALIZATION_DESERIALIZER_HPP
 
-#include "detail/primitive_operations.hpp"
 #include "serialization.hpp"
 
 namespace xnet {
 	namespace serialization {
 
-		template<typename Source>
-		class deserializer : public detail::serializer_base<deserializer<Source>>
+		template<typename Source, typename Context = std::tuple<> >
+		class deserializer : public detail::serializer_base<deserializer<Source, Context>>
 		{
+		public:
+			typedef typename detail::make_ref_tuple<Context>::type context_type;
 		public:
 			deserializer(Source& source)
 				: _source(source)
 			{
 			}
+
+			deserializer(Source& source, const context_type& context)
+				: _source(source)
+				, _context(context)
+			{
+			}
+
+			template<typename C>
+			C& context()
+			{
+				return detail::get_tuple_item_by_type<C&, context_type, 0>::func::get(_context);
+			}
+
+
 
 			void current_type(const char* type)
 			{
@@ -75,6 +90,7 @@ namespace xnet {
 
 		private:
 			Source& _source;
+			context_type _context;
 		};
 	}
 }

@@ -11,14 +11,14 @@
 namespace xnet {
 	namespace serialization {
 		namespace detail {
-			template<typename Sink, typename K, typename T, typename Hasher, typename Comp, typename Alloc>
-			void split_serialize_unordered_map(serializer<Sink>& s, const std::unordered_map<K, T, Hasher, Comp, Alloc>& v)
+			template<typename Sink, typename Context, typename K, typename T, typename Hasher, typename Comp, typename Alloc>
+			void split_serialize_unordered_map(serializer<Sink, Context>& s, const std::unordered_map<K, T, Hasher, Comp, Alloc>& v)
 			{
 				detail::save_sequence(s, v.begin(), v.end(), v.size(), nullptr);
 			}
 
-			template<typename Source, typename K, typename T, typename Hasher, typename Comp, typename Alloc>
-			void split_serialize_unordered_map(deserializer<Source>& s, std::unordered_map<K, T, Hasher, Comp, Alloc>& v)
+			template<typename Source, typename Context, typename K, typename T, typename Hasher, typename Comp, typename Alloc>
+			void split_serialize_unordered_map(deserializer<Source, Context>& s, std::unordered_map<K, T, Hasher, Comp, Alloc>& v)
 			{
 				auto size = s.begin_sequence_load(nullptr);
 				v.clear();

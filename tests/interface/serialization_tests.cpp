@@ -15,6 +15,13 @@
 
 namespace serialization_test {
 
+	template<int I>
+	struct NumberContext
+	{
+		int number = 999;
+		bool ok() { return number == I; }
+	};
+
 	struct SerializationTestClass
 	{
 		enum reference_init_t
@@ -60,6 +67,9 @@ namespace serialization_test {
 		void serialize(S& s)
 		{
 			XNET_CURRENT_TYPE(s, *this, SerializationTestClass);
+			s.context<NumberContext<1>>().number = 1;
+			s.context<NumberContext<2>>().number = 2;
+			s.context<NumberContext<3>>().number = 3;
 			s & mBoolMember & mIntMember & mStringMember & mPairMember & mTupleMember & mForwardListMember
 				& mListMember & mMapMember & mSetMember & mUnorderedSetMember & mUnorderedMapMember & mArrayMember;
 		}
@@ -94,17 +104,31 @@ namespace serialization_test {
 	template<typename Sink>
 	void test_sink_format(Sink& sink)
 	{
-		xnet::serialization::serializer<Sink> s(sink);
+		typedef std::tuple<NumberContext<1>, NumberContext<2>, NumberContext<3>> Contx;
+		NumberContext<1> n1;
+		NumberContext<2> n2;
+		NumberContext<3> n3;
+		xnet::serialization::serializer<Sink, Contx> s(sink, std::forward_as_tuple(n1, n2, n3));
 		s << reference_instance;
+		BOOST_CHECK(n1.ok());
+		BOOST_CHECK(n2.ok());
+		BOOST_CHECK(n3.ok());
 	}
 
 	template<typename Source>
 	void test_source_format(Source& source)
 	{
-		xnet::serialization::deserializer<Source> s(source);
+		typedef std::tuple<NumberContext<1>, NumberContext<2>, NumberContext<3>> Contx;
+		NumberContext<1> n1;
+		NumberContext<2> n2;
+		NumberContext<3> n3;
+		xnet::serialization::deserializer<Source, Contx> s(source, std::forward_as_tuple(n1, n2, n3));
 		SerializationTestClass c;
 		s >> c;
 		BOOST_CHECK_EQUAL(c, reference_instance);
+		BOOST_CHECK(n1.ok());
+		BOOST_CHECK(n2.ok());
+		BOOST_CHECK(n3.ok());
 	}
 
 

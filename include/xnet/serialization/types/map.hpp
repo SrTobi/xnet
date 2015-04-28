@@ -11,14 +11,14 @@
 namespace xnet {
 	namespace serialization {
 		namespace detail {
-			template<typename Sink, typename K, typename T, typename Comp, typename Alloc>
-			void split_serialize_map(serializer<Sink>& s, const std::map<K, T, Comp, Alloc>& v)
+			template<typename Sink, typename Context, typename K, typename T, typename Comp, typename Alloc>
+			void split_serialize_map(serializer<Sink, Context>& s, const std::map<K, T, Comp, Alloc>& v)
 			{
 				detail::save_sequence(s, v.begin(), v.end(), v.size(), nullptr);
 			}
 
-			template<typename Source, typename K, typename T, typename Comp, typename Alloc>
-			void split_serialize_map(deserializer<Source>& s, std::map<K, T, Comp, Alloc>& v)
+			template<typename Source, typename Context, typename K, typename T, typename Comp, typename Alloc>
+			void split_serialize_map(deserializer<Source, Context>& s, std::map<K, T, Comp, Alloc>& v)
 			{
 				auto size = s.begin_sequence_load(nullptr);
 				v.clear();

@@ -10,14 +10,14 @@
 namespace xnet {
 	namespace serialization {
 		namespace detail {
-			template<typename Sink, typename T, typename Hasher, typename Comp, typename Alloc>
-			void split_serialize_unordered_set(serializer<Sink>& s, const std::unordered_set<T, Hasher, Comp, Alloc>& v)
+			template<typename Sink, typename Context, typename T, typename Hasher, typename Comp, typename Alloc>
+			void split_serialize_unordered_set(serializer<Sink, Context>& s, const std::unordered_set<T, Hasher, Comp, Alloc>& v)
 			{
 				detail::save_sequence(s, v.begin(), v.end(), v.size(), nullptr);
 			}
 
-			template<typename Source, typename T, typename Hasher, typename Comp, typename Alloc>
-			void split_serialize_unordered_set(deserializer<Source>& s, std::unordered_set<T, Hasher, Comp, Alloc>& v)
+			template<typename Source, typename Context, typename T, typename Hasher, typename Comp, typename Alloc>
+			void split_serialize_unordered_set(deserializer<Source, Context>& s, std::unordered_set<T, Hasher, Comp, Alloc>& v)
 			{
 				auto size = s.begin_sequence_load(nullptr);
 				v.clear();

@@ -8,13 +8,27 @@
 namespace xnet {
 	namespace serialization {
 
-		template<typename Sink>
-		class serializer : public detail::serializer_base<serializer<Sink>>
+		template<typename Sink, typename Context = std::tuple<>>
+		class serializer : public detail::serializer_base<serializer<Sink, Context>>
 		{
 		public:
-			serializer(Sink& source)
-				: _sink(source)
+			typedef typename detail::make_ref_tuple<Context>::type context_type;
+		public:
+			serializer(Sink& sink)
+				: _sink(sink)
 			{
+			}
+
+			serializer(Sink& sink, const context_type& context)
+				: _sink(sink)
+				, _context(context)
+			{
+			}
+			
+			template<typename C>
+			C& context()
+			{
+				return detail::get_tuple_item_by_type<C&, context_type, 0>::func::get(_context);
 			}
 
 			void current_type(const char* type)
@@ -78,6 +92,7 @@ namespace xnet {
 			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save_tagged_value, { _sink.save(out, tag); }, out, const char* tag)
 		private:
 			Sink& _sink;
+			context_type _context;
 		};
 	}
 }

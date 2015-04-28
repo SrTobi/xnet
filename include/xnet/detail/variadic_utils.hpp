@@ -45,6 +45,14 @@ namespace xnet {
 			: public variadic_and<tail...>
 		{
 		};
+
+
+		/************************************** is_specialization  **************************************/
+		template<typename Test, template<typename...> class Ref>
+		struct is_specialization : public std::false_type {};
+
+		template<template<typename...> class Ref, typename... Args>
+		struct is_specialization<Ref<Args...>, Ref> : public std::true_type {};
 	}
 }
 
