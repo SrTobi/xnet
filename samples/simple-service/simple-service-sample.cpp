@@ -44,6 +44,10 @@ class LoginServiceImpl : public LoginService
 public:
 	virtual remote_service<ChatService> login(std::string password) override
 	{
+		if (password == "test")
+		{
+			throw std::exception("Wrong password");
+		}
 		return std::make_shared<ChatServiceImpl>();
 	}
 };
@@ -55,4 +59,34 @@ int main()
 	service_peer serverPeer;
 
 	serverPeer.add_service("loginService", std::make_shared<LoginServiceImpl>());
+
+	remote_service<ChatService> chat_service;
+
+	while (!chat_service)
+	{
+		std::string pw; std::cin >> pw;
+		auto pack = clientPeer.make_call("loginService", &LoginService::login, [&chat_service](remote_service<ChatService>& rem){
+			std::cout << "Logged in!" << std::endl;
+			chat_service = rem;
+		}, [](const xnet::service::call_error& e){
+			std::cout << "Error while logging in: " << e.what() << std::endl;
+		}, pw);
+
+		pack = serverPeer.process_package(pack);
+		clientPeer.process_package(pack);
+	}
+
+	while (true)
+	{
+		std::string msg;
+		std::cout << "Enter message for server: ";
+		std::cin >> msg;
+		auto pack = chat_service.make_call(&ChatService::chat,
+									[](std::string m) { std::cout << "Message from server: " << m << std::endl; },
+									[](const call_error& e){ std::cout << "Error while chatting: " << e.what() << std::endl; },
+									msg);
+
+		pack = serverPeer.process_package(pack);
+		clientPeer.process_package(pack);
+	}
 }
