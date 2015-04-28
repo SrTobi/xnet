@@ -104,12 +104,13 @@ namespace serialization_test {
 	template<typename Sink>
 	void test_sink_format(Sink& sink)
 	{
-		typedef std::tuple<NumberContext<1>, NumberContext<2>, NumberContext<3>> Contx;
+		typedef std::tuple<NumberContext<1>, NumberContext<2>> Contx;
 		NumberContext<1> n1;
 		NumberContext<2> n2;
 		NumberContext<3> n3;
-		xnet::serialization::serializer<Sink, Contx> s(sink, std::forward_as_tuple(n1, n2, n3));
-		s << reference_instance;
+		xnet::serialization::serializer<Sink, Contx> s(sink, std::forward_as_tuple(n1, n2));
+		auto newS = s.with_context(n3);
+		newS << reference_instance;
 		BOOST_CHECK(n1.ok());
 		BOOST_CHECK(n2.ok());
 		BOOST_CHECK(n3.ok());
@@ -118,13 +119,14 @@ namespace serialization_test {
 	template<typename Source>
 	void test_source_format(Source& source)
 	{
-		typedef std::tuple<NumberContext<1>, NumberContext<2>, NumberContext<3>> Contx;
+		typedef std::tuple<NumberContext<1>> Contx;
 		NumberContext<1> n1;
 		NumberContext<2> n2;
 		NumberContext<3> n3;
-		xnet::serialization::deserializer<Source, Contx> s(source, std::forward_as_tuple(n1, n2, n3));
+		xnet::serialization::deserializer<Source, Contx> s(source, std::forward_as_tuple(n1));
+		auto newS = s.with_context(n2, n3);
 		SerializationTestClass c;
-		s >> c;
+		newS >> c;
 		BOOST_CHECK_EQUAL(c, reference_instance);
 		BOOST_CHECK(n1.ok());
 		BOOST_CHECK(n2.ok());

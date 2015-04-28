@@ -30,7 +30,13 @@ namespace xnet {
 				return detail::get_tuple_item_by_type<C&, context_type, 0>::func::get(_context);
 			}
 
-
+			template<typename... Args>
+			auto with_context(Args&... contexts)
+				-> deserializer<Source, decltype(std::tuple_cat(_context, std::forward_as_tuple(contexts...)))>
+			{
+				auto newContext = std::tuple_cat(_context, std::forward_as_tuple(contexts...));
+				return deserializer<Source,  decltype(newContext)>(_source, std::move(newContext));
+			}
 
 			void current_type(const char* type)
 			{
