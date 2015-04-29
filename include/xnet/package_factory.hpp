@@ -59,28 +59,46 @@ namespace xnet {
 		template<typename T>
 		package make_package(const T& val) const
 		{
-			return construct(_construction_handler(val));
+			return construct(_construction_handler(val, serialization::context<>()));
 		}
 
 		template<typename T>
 		package make_package(const T& val, const package& nextPkg) const
 		{
-			return construct(_construction_handler(val), nextPkg);
+			return construct(_construction_handler(val, serialization::context<>()), nextPkg);
 		}
 
 		template<typename T>
 		package make_package(const T& val, const package_format& format) const
 		{
-			return construct(_construction_handler(val), format);
+			return construct(_construction_handler(val, serialization::context<>()), format);
+		}
+
+		template<typename T, typename... ContextItem>
+		package make_package(const T& val, serialization::context<ContextItem...> context) const
+		{
+			return construct(_construction_handler(val, context));
+		}
+
+		template<typename T, typename... ContextItem>
+		package make_package(const T& val, const package& nextPkg, serialization::context<ContextItem...> context) const
+		{
+			return construct(_construction_handler(val, context), nextPkg);
+		}
+
+		template<typename T, typename... ContextItem>
+		package make_package(const T& val, const package_format& format, serialization::context<ContextItem...> context) const
+		{
+			return construct(_construction_handler(val, context), format);
 		}
 
 	private:
-		template<typename T>
-		static inline constr_type _construction_handler(const T& val)
+		template<typename T, typename Context>
+		static inline constr_type _construction_handler(const T& val, Context&& context)
 		{
-			return [&val](serialization::generic_sink& sink)
+			return [&val, context](serialization::generic_sink& sink) mutable
 			{
-				serialization::serializer<serialization::generic_sink> serializer(sink);
+				serialization::serializer<serialization::generic_sink, typename std::decay<Context>::type> serializer(sink, std::move(context));
 				serializer << val;
 			};
 		}
