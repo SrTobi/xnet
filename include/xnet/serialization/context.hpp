@@ -8,18 +8,18 @@
 namespace xnet {
 	namespace serialization {
 		namespace detail {
-			template<typename T, typename Tuple, std::size_t I>
+			template<typename C, typename Tuple, std::size_t I>
 			struct get_tuple_item_by_type
 			{
-				static_assert(I < std::tuple_size<Tuple>::value, "Can not find item of type T!");
+				static_assert(I < std::tuple_size<Tuple>::value, "Can not find item of type C!");
 			private:
-				typedef typename std::decay<T>::type decay_t_type;
+				typedef typename std::decay<C>::type decay_t_type;
 				typedef typename std::tuple_element<I, Tuple>::type elem_type;
 				typedef typename std::decay<elem_type>::type decay_elem_type;
 
 				struct get_func
 				{
-					static T& get(Tuple& t)
+					static C& get(Tuple& t)
 					{
 						return std::get<I>(t);
 					}
@@ -28,7 +28,7 @@ namespace xnet {
 				template<bool = std::is_same<decay_elem_type, decay_t_type>::value>
 				struct inner_get
 				{
-					typedef typename get_tuple_item_by_type<T, Tuple, I + 1>::func type;
+					typedef typename get_tuple_item_by_type<C, Tuple, I + 1>::func type;
 				};
 
 				template<>
