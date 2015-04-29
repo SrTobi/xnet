@@ -2,23 +2,23 @@
 #ifndef _XNET_SERIALIZATION_DESERIALIZER_HPP
 #define _XNET_SERIALIZATION_DESERIALIZER_HPP
 
+#include "context.hpp"
 #include "serialization.hpp"
 
 namespace xnet {
 	namespace serialization {
 
-		template<typename Source, typename Context = std::tuple<> >
+		template<typename Source, typename Context = context<> >
 		class deserializer : public detail::serializer_base<deserializer<Source, Context>>
 		{
-		public:
-			typedef typename detail::make_ref_tuple<Context>::type context_type;
+			static_assert(is_context<Context>::value, "Context must be a context!");
 		public:
 			deserializer(Source& source)
 				: _source(source)
 			{
 			}
 
-			deserializer(Source& source, const context_type& context)
+			deserializer(Source& source, const Context& context)
 				: _source(source)
 				, _context(context)
 			{
@@ -27,14 +27,14 @@ namespace xnet {
 			template<typename C>
 			C& context()
 			{
-				return detail::get_tuple_item_by_type<C&, context_type, 0>::func::get(_context);
+				return _context.get<C>();
 			}
 
 			template<typename... Args>
 			auto with_context(Args&... contexts)
-				-> deserializer<Source, decltype(std::tuple_cat(_context, std::forward_as_tuple(contexts...)))>
+				-> deserializer<Source, decltype(_context.with(contexts...))>
 			{
-				auto newContext = std::tuple_cat(_context, std::forward_as_tuple(contexts...));
+				auto newContext = _context.with(contexts...);
 				return deserializer<Source,  decltype(newContext)>(_source, std::move(newContext));
 			}
 
@@ -96,7 +96,7 @@ namespace xnet {
 
 		private:
 			Source& _source;
-			context_type _context;
+			Context _context;
 		};
 	}
 }

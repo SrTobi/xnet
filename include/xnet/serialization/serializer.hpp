@@ -3,23 +3,23 @@
 #define _XNET_SERIALIZATION_SERIALIZER_HPP
 
 
+#include "context.hpp"
 #include "serialization.hpp"
 
 namespace xnet {
 	namespace serialization {
 
-		template<typename Sink, typename Context = std::tuple<>>
+		template<typename Sink, typename Context = context<>>
 		class serializer : public detail::serializer_base<serializer<Sink, Context>>
 		{
-		public:
-			typedef typename detail::make_ref_tuple<Context>::type context_type;
+			static_assert(is_context<Context>::value, "Context must be a context!");
 		public:
 			serializer(Sink& sink)
 				: _sink(sink)
 			{
 			}
 
-			serializer(Sink& sink, const context_type& context)
+			serializer(Sink& sink, const Context& context)
 				: _sink(sink)
 				, _context(context)
 			{
@@ -28,14 +28,14 @@ namespace xnet {
 			template<typename C>
 			C& context()
 			{
-				return detail::get_tuple_item_by_type<C&, context_type, 0>::func::get(_context);
+				return _context.get<C>();
 			}
 
 			template<typename... Args>
 			auto with_context(Args&... contexts)
-				-> serializer<Sink, decltype(std::tuple_cat(_context, std::forward_as_tuple(contexts...)))>
+				-> serializer<Sink, decltype(_context.with(contexts...))>
 			{
-				auto newContext = std::tuple_cat(_context, std::forward_as_tuple(contexts...));
+				auto newContext = _context.with(contexts...);
 				return serializer<Sink,  decltype(newContext)>(_sink, std::move(newContext));
 			}
 
@@ -100,7 +100,7 @@ namespace xnet {
 			XNET_DETAIL_PRIMITIVE_SAVE_OPERATIONS(inline void _save_tagged_value, { _sink.save(out, tag); }, out, const char* tag)
 		private:
 			Sink& _sink;
-			context_type _context;
+			Context _context;
 		};
 	}
 }
