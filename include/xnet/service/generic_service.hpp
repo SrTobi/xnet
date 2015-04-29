@@ -9,15 +9,20 @@ namespace xnet {
 		typedef uint16_t funcid_type;
 		typedef uint32_t returnid_type;
 		typedef uint16_t serviceid_type;
+		class service_peer;
 
 		class generic_service
 			: public std::enable_shared_from_this<generic_service>
 		{
+			template<typename Service>
+			friend class remote_service;
 		public:
 			virtual ~generic_service();
 
 		private:
+			bool _local = true;
 			serviceid_type _serviceId = 0;
+			service_peer* _servicePeer = nullptr;
 		};
 
 		template<typename Service>

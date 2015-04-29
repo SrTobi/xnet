@@ -15,6 +15,8 @@ namespace xnet {
 
 		class service_peer
 		{
+			template<typename Service>
+			friend class remote_service;
 		public:
 			service_peer();
 
@@ -68,9 +70,25 @@ namespace xnet {
 					std::forward_as_tuple(args...)
 				};
 
-				package content_pack = _factory->make_package(call);
+				package content_pack = _factory->make_package(call, serialization::make_context(*this));
 				return _factory->make_package(invk_type, content_pack);
 			}
+
+			void associate_service(std::shared_ptr<generic_service> service);
+			/*{
+				static_assert(is_service<Service>::value, "Service must be a service!");
+				assert(service);
+				assert(service->_local);
+				if (service->_servicePeer)
+				{
+					if (service->_servicePeer == this)
+						return;
+
+					throw std::logic_error("Service is already associated with another peer!");
+				}
+
+				_associate_service()
+			}*/
 
 			template<typename Service>
 			void add_service(const std::string& name, std::shared_ptr<Service> service)
@@ -102,15 +120,18 @@ namespace xnet {
 			template<typename Ret, typename RetHandler, typename ExcpHandler>
 			returnid_type _make_return_id(RetHandler&& handler, ExcpHandler&& excpHandler)
 			{
-				auto rh = [](const package& p)
+				auto rh = [handler, this](const package& p)
 				{
-
+					protocol::return_invokation<Ret> ri;
+					p.deserialize(ri, serialization::make_context(*this));
+					handler(std::move(ri.return_value));
 				};
 
 				return _create_return_id(std::move(rh), excpHandler);
 			}
 
 			returnid_type _create_return_id(std::function<void(const package&)>&& handler, std::function<void(call_error&&)> excpHandler);
+			std::shared_ptr<generic_service> _resolve_service(serviceid_type id, const std::string& checksum);
 		private:
 			std::unordered_map<std::string, std::shared_ptr<generic_service>> _namedServices;
 			package_factory* _factory;

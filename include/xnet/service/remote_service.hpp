@@ -3,15 +3,19 @@
 #define _XNET_SERVICE_REMOTE_SERVICE_HPP
 
 #include <memory>
+#include <assert.h>
 #include "generic_service.hpp"
+#include "service_peer.hpp"
 #include "call_error.hpp"
 #include "../package.hpp"
 
 namespace xnet {
 	namespace service {
+
 		template<typename Service>
 		class remote_service
 		{
+			friend class serialization::access;
 			static_assert(is_service<Service>::value, "Service must be a service!");
 		public:
 			remote_service()
@@ -23,8 +27,9 @@ namespace xnet {
 			}
 
 			remote_service(std::shared_ptr<Service> impl)
+				: _service(std::move(impl))
 			{
-
+				assert(!_service || _service->_local);
 			}
 
 			template<typename Ret, typename... FArgs, typename... Args>
@@ -32,6 +37,7 @@ namespace xnet {
 			{
 				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
 				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value...>::value, "Provided arguments can not be converted to required types!");
+				assert(_service);
 
 				throw std::exception("Not implemented");
 			}
@@ -50,18 +56,77 @@ namespace xnet {
 				std::function<void(Ret&&)> func = handler;
 				std::function<void(call_error&&)> func2 = excpHandler;
 
+				assert(_service);
+
 				throw std::exception("Not implemented");
+			}
+
+			bool operator ==(const remote_service& other)
+			{
+				return _service == other._service;
+			}
+
+			bool operator !=(const remote_service& other)
+			{
+				return _service != other._service;
+			}
+
+			bool remote() const
+			{
+				return _service && !_service->_local;
 			}
 
 			operator bool() const
 			{
-				throw std::exception("Not implemented");
+				return (bool)_service;
 			}
 
 			bool operator !() const
 			{
-				throw std::exception("Not implemented");
+				return !_service;
 			}
+
+		private:
+			template<typename S>
+			void serialize(S& s)
+			{
+				serialization::split_this(this, s);
+			}
+
+			template<typename S>
+			void load(S& s)
+			{
+				serviceid_type id;
+				s >> id;
+				if (id == 0)
+				{
+					_service = nullptr;
+				}
+				else{
+					std::string checksum;
+					s >> checksum;
+					_service = s.context<service_peer>()._resolve_service(id, checksum);
+				}
+			}
+
+			template<typename S>
+			void save(S& s)
+			{
+				if (!_service)
+				{
+					s << serviceid_type(0);
+				}
+				else{
+					if (_service->_serviceId == 0)
+					{
+						assert(_service->_servicePeer == nullptr);
+						s.context<service_peer>().associate_service(_service);
+					}
+					s << _service->_serviceId << get_descriptor<Service>().checksum();
+				}
+			}
+		public:
+			std::shared_ptr<generic_service> _service;
 		};
 
 	}
