@@ -61,12 +61,12 @@ namespace xnet {
 				throw std::exception("Not implemented");
 			}
 
-			bool operator ==(const remote_service& other)
+			bool operator ==(const remote_service& other) const
 			{
 				return _service == other._service;
 			}
 
-			bool operator !=(const remote_service& other)
+			bool operator !=(const remote_service& other) const
 			{
 				return _service != other._service;
 			}
