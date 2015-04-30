@@ -8,6 +8,7 @@
 #include "service_peer.hpp"
 #include "call_error.hpp"
 #include "../package.hpp"
+#include "../serialization/split.hpp"
 
 namespace xnet {
 	namespace service {
