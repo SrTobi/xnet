@@ -62,25 +62,13 @@ namespace xnet {
 
 			void associate_service(std::shared_ptr<generic_service> service);
 			/*{
-				static_assert(is_service<Service>::value, "Service must be a service!");
-				assert(service);
-				assert(service->_local);
-				if (service->_servicePeer)
-				{
-					if (service->_servicePeer == this)
-						return;
-
-					throw std::logic_error("Service is already associated with another peer!");
-				}
-
-				_associate_service()
 			}*/
 
 			template<typename Service>
 			void add_service(const std::string& name, std::shared_ptr<Service> service)
 			{
 				static_assert(is_service<Service>::value, "Service must be a service!");
-
+				associate_service(service);
 				auto res = _namedServices.emplace(name, std::move(service));
 				if (!res.second)
 				{
@@ -116,6 +104,8 @@ namespace xnet {
 				return _create_return_id(std::move(rh), excpHandler);
 			}
 
+			serviceid_type _newServiceId();
+
 			returnid_type _create_return_id(std::function<void(const package&)>&& handler, std::function<void(call_error&&)> excpHandler);
 			std::shared_ptr<generic_service> _resolve_service(serviceid_type id, const std::string& checksum);
 
@@ -123,8 +113,10 @@ namespace xnet {
 			package _make_call_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
 
 		private:
+			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _associatedServices;
 			std::unordered_map<std::string, std::shared_ptr<generic_service>> _namedServices;
 			package_factory* _factory;
+			serviceid_type _nextServiceId = 1;
 		};
 	}
 }
