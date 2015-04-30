@@ -29,7 +29,7 @@ namespace xnet {
 			remote_service(std::shared_ptr<Service> impl)
 				: _service(std::move(impl))
 			{
-				assert(!_service || _service->_local);
+				assert(!_service || !remote());
 			}
 
 			template<typename Ret, typename... FArgs, typename... Args>
@@ -87,6 +87,15 @@ namespace xnet {
 			}
 
 		private:
+			bool _associated() const
+			{
+				return _service && _service->_backend;
+			}
+			detail::service_backend* _backend() const
+			{
+				assert(_service);
+				return _service->_backend.get();
+			}
 			template<typename S>
 			void serialize(S& s)
 			{
@@ -117,7 +126,7 @@ namespace xnet {
 					s << serviceid_type(0);
 				}
 				else{
-					if (_service->_serviceId == 0)
+					if (_backend()->id() == 0)
 					{
 						assert(_service->_servicePeer == nullptr);
 						s.context<service_peer>().associate_service(_service);
