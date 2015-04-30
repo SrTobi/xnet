@@ -23,15 +23,18 @@ namespace xnet {
 				inline serviceid_type id() const { assert(_id != 0); return _id; }
 				inline service_peer* peer() const { return _peer; }
 			private:
+				service_backend(service_peer* peer, generic_service* service, serviceid_type id);
+			private:
 				service_peer* _peer;
 				generic_service* _service;
-				serviceid_type _id;
+				const serviceid_type _id;
 			};
 		}
 
 		class generic_service
 			: public std::enable_shared_from_this<generic_service>
 		{
+			friend class service_peer;
 			template<typename Service>
 			friend class remote_service;
 		public:
@@ -39,7 +42,7 @@ namespace xnet {
 
 		private:
 			const bool _local = true;
-			std::unique_ptr<detail::service_backend> _backend;
+			std::unique_ptr<const detail::service_backend> _backend;
 		};
 
 		template<typename Service>
