@@ -33,7 +33,7 @@ namespace xnet {
 				assert(!_service || !remote());
 			}
 
-			template<typename Ret, typename... FArgs, typename... Args>
+			/*template<typename Ret, typename... FArgs, typename... Args>
 			package make_invokation(Ret(Service::*method)(FArgs...), Args&&... args)
 			{
 				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
@@ -60,7 +60,7 @@ namespace xnet {
 				assert(_service);
 
 				throw std::exception("Not implemented");
-			}
+			}*/
 
 			bool operator ==(const remote_service& other) const
 			{
@@ -88,15 +88,6 @@ namespace xnet {
 			}
 
 		private:
-			bool _associated() const
-			{
-				return _service && _service->_backend;
-			}
-			detail::service_backend* _backend() const
-			{
-				assert(_service);
-				return _service->_backend.get();
-			}
 			template<typename S>
 			void serialize(S& s)
 			{
@@ -115,7 +106,7 @@ namespace xnet {
 				else{
 					std::string checksum;
 					s >> checksum;
-					_service = s.context<service_peer>()._resolve_service(id, checksum);
+					_service = s.context<service_peer>()._resolve_service_id(id, checksum);
 				}
 			}
 
@@ -127,12 +118,7 @@ namespace xnet {
 					s << serviceid_type(0);
 				}
 				else{
-					if (_backend()->id() == 0)
-					{
-						assert(_service->_servicePeer == nullptr);
-						s.context<service_peer>().associate_service(_service);
-					}
-					s << _service->_serviceId << get_descriptor<Service>().checksum();
+					s << s.context<service_peer>()._get_service_id(_service);
 				}
 			}
 		public:

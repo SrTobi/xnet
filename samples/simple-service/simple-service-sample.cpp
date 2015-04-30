@@ -67,6 +67,7 @@ int main()
 
 	while (!chat_service)
 	{
+		std::cout << "Enter password: ";
 		std::string pw; std::cin >> pw;
 		auto pack = clientPeer.make_call("loginService", &LoginService::login, [&chat_service](remote_service<ChatService>& rem){
 			std::cout << "Logged in!" << std::endl;
@@ -84,7 +85,8 @@ int main()
 		std::string msg;
 		std::cout << "Enter message for server: ";
 		std::cin >> msg;
-		auto pack = chat_service.make_call(&ChatService::chat,
+		auto pack = clientPeer.make_call(chat_service,
+									&ChatService::chat,
 									[](std::string m) { std::cout << "Message from server: " << m << std::endl; },
 									[](const call_error& e){ std::cout << "Error while chatting: " << e.what() << std::endl; },
 									msg);

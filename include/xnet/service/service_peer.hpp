@@ -13,11 +13,19 @@
 
 namespace xnet {
 	namespace service {
+		template<typename Service>
+		class remote_service;
 
 		class service_peer
 		{
 			template<typename Service>
 			friend class remote_service;
+
+			struct return_slot
+			{
+				std::function<void(const package&)> handler;
+				std::function<void(call_error&&)> excpHandler;
+			};
 		public:
 			service_peer(package_factory* factory);
 
@@ -60,15 +68,31 @@ namespace xnet {
 				return _make_call_package(serviceName, desc.checksum(), desc.resolve_method(method), _make_return_id<Ret>(handler, excpHandler), arg_pack);
 			}
 
-			void associate_service(std::shared_ptr<generic_service> service);
-			/*{
-			}*/
+			template<typename Service, typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
+			package make_call(
+				const remote_service<Service>& service,
+				Ret(Service::*method)(FArgs...),
+				RetHandler&& handler,
+				ExcpHandler&& excpHandler,
+				Args&&... args)
+			{
+				static_assert(is_service<Service>::value, "Service must be a service!");
+				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
+				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value...>::value, "Provided arguments can not be converted to required types!");
+				static_assert(std::is_convertible<RetHandler, std::function<void(Ret&&)>>::value, "RetHandler must be convertible to void(Ret)!");
+				static_assert(std::is_convertible<ExcpHandler, std::function<void(call_error&&)>>::value, "RetHandler must be convertible to void(Ret)!");
+				{
+					std::function<void(Ret&&)> handler2 = handler;
+					std::function<void(call_error&&)> excpHandler2 = excpHandler;
+				}
+
+				throw std::exception("Not implemented!");
+			}
 
 			template<typename Service>
 			void add_service(const std::string& name, std::shared_ptr<Service> service)
 			{
 				static_assert(is_service<Service>::value, "Service must be a service!");
-				associate_service(service);
 				auto res = _namedServices.emplace(name, std::move(service));
 				if (!res.second)
 				{
@@ -105,18 +129,28 @@ namespace xnet {
 			}
 
 			serviceid_type _newServiceId();
+			returnid_type _newReturnId();
 
 			returnid_type _create_return_id(std::function<void(const package&)>&& handler, std::function<void(call_error&&)> excpHandler);
-			std::shared_ptr<generic_service> _resolve_service(serviceid_type id, const std::string& checksum);
+			std::shared_ptr<generic_service> _resolve_service_id(serviceid_type id, const std::string& checksum);
+			template<typename Service>
+			serviceid_type _get_service_id(const std::shared_ptr<const Service>& service)
+			{
+				return _get_service_id(service, typeid(Service));
+			}
+			serviceid_type _get_service_id(const std::shared_ptr<generic_service>& service, const std::type_info& info);
 
 			package _make_invokation_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack);
 			package _make_call_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
 
 		private:
-			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _associatedServices;
+			std::unordered_map<std::shared_ptr<generic_service>, serviceid_type> _serviceToIdMapping;
+			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _idToServiceMapping;
+			std::unordered_map<returnid_type, return_slot> _returnSlots;
 			std::unordered_map<std::string, std::shared_ptr<generic_service>> _namedServices;
 			package_factory* _factory;
 			serviceid_type _nextServiceId = 1;
+			returnid_type _nextReturnId = 1;
 		};
 	}
 }

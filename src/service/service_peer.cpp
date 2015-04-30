@@ -7,10 +7,10 @@ namespace xnet {
 		service_peer::service_peer(package_factory* factory)
 			: _factory(factory)
 		{
-			assert(nullptr);
+			assert(factory);
 		}
 
-		void service_peer::associate_service(std::shared_ptr<generic_service> service)
+		/*void service_peer::associate_service(std::shared_ptr<generic_service> service)
 		{
 			assert(service);
 			assert(service->_local);
@@ -37,7 +37,7 @@ namespace xnet {
 			}
 
 			service->_backend = std::move(backend);
-		}
+		}*/
 
 		bool service_peer::remove_service(const std::string& name)
 		{
@@ -55,14 +55,43 @@ namespace xnet {
 			return newId == 0 ? _newServiceId() : newId;
 		}
 
-		xnet::service::returnid_type service_peer::_create_return_id(std::function<void(const package&)>&& handler, std::function<void(call_error&&)> excpHandler)
+		xnet::service::returnid_type service_peer::_newReturnId()
 		{
-			throw std::exception("Not implemented!");
+			if(_nextReturnId == 0)
+				throw std::runtime_error("Exceeded maximum number of returns!");
+			return _nextReturnId++;
 		}
 
-		std::shared_ptr<generic_service> service_peer::_resolve_service(serviceid_type id, const std::string& checksum)
+		xnet::service::returnid_type service_peer::_create_return_id(std::function<void(const package&)>&& handler, std::function<void(call_error&&)> excpHandler)
 		{
-			throw std::exception("Not implemented!");
+			auto id = _newReturnId();
+			_returnSlots.emplace(id, return_slot{ handler, std::move(excpHandler) });
+			return id;
+		}
+
+		std::shared_ptr<generic_service> service_peer::_resolve_service_id(serviceid_type id, const std::string& checksum)
+		{
+			return _idToServiceMapping.at(id);
+		}
+
+		xnet::service::serviceid_type service_peer::_get_service_id(const std::shared_ptr<generic_service>& service, const std::type_info& info)
+		{
+			auto it = _serviceToIdMapping.find(service);
+			if (it != _serviceToIdMapping.end())
+				return it->second;
+
+			auto id = _newServiceId();
+			bool inserted;
+			std::tie(std::ignore, inserted) = _serviceToIdMapping.emplace(service, id);
+			assert(inserted);
+
+			std::tie(std::ignore, inserted) = _idToServiceMapping.emplace(id, std::move(service));
+			if (!inserted)
+			{
+				throw std::runtime_error("Can not associate service! There are too many services associated!");
+			}
+
+			return id;
 		}
 
 		xnet::package service_peer::_make_invokation_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack)
@@ -73,7 +102,7 @@ namespace xnet {
 				checksum,
 				funcId
 			};
-			return _factory->make_package(header, arg_pack);
+			return _factory->make_package(XNET_TAGVAL(header), arg_pack);
 		}
 
 		xnet::package service_peer::_make_call_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack)
@@ -85,7 +114,7 @@ namespace xnet {
 				funcId,
 				returnId
 			};
-			return _factory->make_package(header, arg_pack);
+			return _factory->make_package(XNET_TAGVAL(header), arg_pack);
 		}
 
 	}
