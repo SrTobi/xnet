@@ -12,8 +12,16 @@
 #include <xnet/serialization/types/set.hpp>
 #include <xnet/serialization/types/tuple.hpp>
 #include <xnet/serialization/types/array.hpp>
+#include <xnet/serialization/types/enum.hpp>
+#include <xnet/serialization/types/variant.hpp>
 
 namespace serialization_test {
+	enum class TestEnum
+	{
+		A = 1,
+		B = 2
+	};
+	XNET_SERIALIZATION_ENUM(TestEnum)
 
 	template<int I>
 	struct NumberContext
@@ -41,6 +49,8 @@ namespace serialization_test {
 		std::unordered_set<std::string> mUnorderedSetMember;
 		std::unordered_map<int, std::string> mUnorderedMapMember;
 		std::array<int, 5> mArrayMember;
+		TestEnum mEnumMember = TestEnum::B;
+		boost::variant<int, std::string> mVariantMember = 4;
 
 
 		SerializationTestClass()
@@ -60,6 +70,8 @@ namespace serialization_test {
 			, mUnorderedSetMember({ "a", "b", "c" })
 			, mUnorderedMapMember({ { 0, "a" }, { 1, "b" } })
 			, mArrayMember({1, 2, 3, 4, 5})
+			, mEnumMember(TestEnum::A)
+			, mVariantMember("test")
 		{
 		}
 		
@@ -71,23 +83,26 @@ namespace serialization_test {
 			s.context<NumberContext<2>>().number = 2;
 			s.context<NumberContext<3>>().number = 3;
 			s & mBoolMember & mIntMember & mStringMember & mPairMember & mTupleMember & mForwardListMember
-				& mListMember & mMapMember & mSetMember & mUnorderedSetMember & mUnorderedMapMember & mArrayMember;
+				& mListMember & mMapMember & mSetMember & mUnorderedSetMember & mUnorderedMapMember & mArrayMember
+				& mEnumMember & mVariantMember;
 		}
 
 		bool operator ==(const SerializationTestClass& right) const
 		{
-			return mBoolMember == mBoolMember
-				&& mIntMember == mIntMember
-				&& mStringMember == mStringMember
-				&& mPairMember == mPairMember
-				&& mTupleMember == mTupleMember
-				&& mForwardListMember == mForwardListMember
-				&& mListMember == mListMember
-				&& mMapMember == mMapMember
-				&& mSetMember == mSetMember
-				&& mUnorderedMapMember == mUnorderedMapMember
-				&& mUnorderedSetMember == mUnorderedSetMember
-				&& mArrayMember == mArrayMember;
+			return mBoolMember == right.mBoolMember
+				&& mIntMember == right.mIntMember
+				&& mStringMember == right.mStringMember
+				&& mPairMember == right.mPairMember
+				&& mTupleMember == right.mTupleMember
+				&& mForwardListMember == right.mForwardListMember
+				&& mListMember == right.mListMember
+				&& mMapMember == right.mMapMember
+				&& mSetMember == right.mSetMember
+				&& mUnorderedMapMember == right.mUnorderedMapMember
+				&& mUnorderedSetMember == right.mUnorderedSetMember
+				&& mArrayMember == right.mArrayMember
+				&& mEnumMember == right.mEnumMember
+				&& mVariantMember == right.mVariantMember;
 		}
 	};
 
