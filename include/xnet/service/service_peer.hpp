@@ -3,8 +3,9 @@
 #define _XNET_SERVICE_SERVICE_PEER_HPP
 
 #include <unordered_map>
+#include "../serialization/serialization.hpp"
+#include "../serialization/types/tuple.hpp"
 #include "../detail/variadic_utils.hpp"
-#include "protocol/service_protocol.hpp"
 #include "service_descriptor.hpp"
 #include "call_error.hpp"
 #include "../package.hpp"
@@ -29,17 +30,9 @@ namespace xnet {
 
 				const auto& desc = get_descriptor<Service>();
 
-				protocol::invokation_type invk_type = protocol::invokation_type::static_invokation;
-				protocol::static_invokation<FArgs...> invk
-				{
-					serviceName,
-					desc.checksum(),
-					desc.resolve_method(method),
-					std::forward_as_tuple(args...)
-				};
-
-				package content_pack = _factory->make_package(invk);
-				return _factory->make_package(invk_type, content_pack);
+				std::tuple<FArgs...> arguments(args...);
+				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
+				return _make_invokation_package(serviceName, desc.checksum(), desc.resolve_method(method), arg_pack);
 			}
 
 			template<typename Service, typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
@@ -55,23 +48,16 @@ namespace xnet {
 				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value...>::value, "Provided arguments can not be converted to required types!");
 				static_assert(std::is_convertible<RetHandler, std::function<void(Ret&&)>>::value, "RetHandler must be convertible to void(Ret)!");
 				static_assert(std::is_convertible<ExcpHandler, std::function<void(call_error&&)>>::value, "RetHandler must be convertible to void(Ret)!");
-				std::function<void(Ret&&)> func = handler;
-				std::function<void(call_error&&)> func2 = excpHandler;
+				{
+					std::function<void(Ret&&)> handler2 = handler;
+					std::function<void(call_error&&)> excpHandler2 = excpHandler;
+				}
 
 				const auto& desc = get_descriptor<Service>();
 
-				protocol::invokation_type invk_type = protocol::invokation_type::static_call;
-				protocol::static_call<FArgs...> call
-				{
-					serviceName,
-					desc.checksum(),
-					desc.resolve_method(method),
-					_make_return_id<Ret>(handler, excpHandler),
-					std::forward_as_tuple(args...)
-				};
-
-				package content_pack = _factory->make_package(call, serialization::make_context(*this));
-				return _factory->make_package(invk_type, content_pack);
+				std::tuple<FArgs...> arguments(args...);
+				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
+				return _make_call_package(serviceName, desc.checksum(), desc.resolve_method(method), _make_return_id<Ret>(handler, excpHandler), arg_pack);
 			}
 
 			void associate_service(std::shared_ptr<generic_service> service);
@@ -122,9 +108,9 @@ namespace xnet {
 			{
 				auto rh = [handler, this](const package& p)
 				{
-					protocol::return_invokation<Ret> ri;
-					p.deserialize(ri, serialization::make_context(*this));
-					handler(std::move(ri.return_value));
+					Ret return_value;
+					p.deserialize(XNET_TAGVAL(return_value), serialization::make_context(*this));
+					handler(std::move(return_value));
 				};
 
 				return _create_return_id(std::move(rh), excpHandler);
@@ -132,6 +118,10 @@ namespace xnet {
 
 			returnid_type _create_return_id(std::function<void(const package&)>&& handler, std::function<void(call_error&&)> excpHandler);
 			std::shared_ptr<generic_service> _resolve_service(serviceid_type id, const std::string& checksum);
+
+			package _make_invokation_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack);
+			package _make_call_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
+
 		private:
 			std::unordered_map<std::string, std::shared_ptr<generic_service>> _namedServices;
 			package_factory* _factory;
