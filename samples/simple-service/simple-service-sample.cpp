@@ -56,9 +56,10 @@ public:
 
 int main()
 {
+	xnet::package_factory fac;
 	using namespace xnet::service;
-	service_peer clientPeer;
-	service_peer serverPeer;
+	service_peer clientPeer(&fac);
+	service_peer serverPeer(&fac);
 
 	serverPeer.add_service("loginService", std::make_shared<LoginServiceImpl>());
 

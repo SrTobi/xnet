@@ -19,7 +19,7 @@ namespace xnet {
 			template<typename Service>
 			friend class remote_service;
 		public:
-			service_peer();
+			service_peer(package_factory* factory);
 
 			template<typename Service, typename FArgs, typename... Args>
 			package make_invokation(const std::string& serviceName, void(Service::*method)(Args...), Args&&... args)
