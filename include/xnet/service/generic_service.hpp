@@ -13,6 +13,7 @@ namespace xnet {
 		typedef uint16_t serviceid_type;
 		class service_peer;
 		class generic_service;
+		class generic_service_descriptor;
 
 		class generic_service
 			: public std::enable_shared_from_this<generic_service>
@@ -23,8 +24,20 @@ namespace xnet {
 		public:
 			virtual ~generic_service();
 
+		protected:
+			virtual const generic_service_descriptor& _descriptor() const = 0;
 		private:
 			const bool _local = true;
+		};
+
+		template<typename Service>
+		class abstract_service
+			: public generic_service
+		{
+			friend class service_peer;
+
+		protected:
+			virtual const generic_service_descriptor& _descriptor() const override final;
 		};
 
 		template<typename Service>
@@ -32,6 +45,9 @@ namespace xnet {
 			: public std::is_base_of<generic_service, Service>
 		{
 		};
+
+#define XNET_DECLARE_SERVICE(name) struct name;
+#define XNET_SERVICE(name) struct name : public ::xnet::service::abstract_service<name>
 	}
 }
 

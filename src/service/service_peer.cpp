@@ -44,9 +44,84 @@ namespace xnet {
 			return _namedServices.erase(name) > 0;
 		}
 
-		xnet::package service_peer::process_package(const package&)
+		xnet::package service_peer::process_package(const package& pack)
 		{
-			throw std::exception("Not implemented!");
+			struct header_visitor : public boost::static_visitor<package>
+			{
+				header_visitor(service_peer* peer, const package& args)
+					: peer(peer)
+					, args(args)
+				{
+				}
+
+				package operator()(protocol::static_invokation& call)
+				{
+					std::shared_ptr<generic_service> service;
+					auto& desc = _static_descriptor(call.service_name, call.service_checksum, service);
+					desc.invoke(service, *peer, call.func_id, args);
+					return nullptr;
+				}
+
+				package operator()(protocol::static_call& call)
+				{
+					std::shared_ptr<generic_service> service;
+					auto& desc = _static_descriptor(call.service_name, call.service_checksum, service);
+					return desc.call(service, *peer, call.func_id, call.return_id, args);
+				}
+
+				package operator()(protocol::dynamic_invokation& call)
+				{
+					return nullptr;
+				}
+				package operator()(protocol::dynamic_call& call)
+				{
+					return nullptr;
+				}
+				package operator()(protocol::return_invokation& call)
+				{
+					return nullptr;
+				}
+				
+				package operator()(protocol::return_exception& call)
+				{
+					return nullptr;
+				}
+
+				service_peer* peer;
+				const package& args;
+
+			private:
+				const generic_service_descriptor& _static_descriptor(const std::string& serviceName, const std::string& serviceChecksum, std::shared_ptr<generic_service>& service)
+				{
+					service = peer->get_service<generic_service>(serviceName);
+					if (!service)
+					{
+						// TODO: throw exception?!
+						throw std::runtime_error("A static service with name '" + serviceName + "' does not exist!");
+					}
+					
+					const auto& desc = service->_descriptor();
+					
+					if (serviceChecksum != desc.checksum())
+					{
+						// TODO: throw exception?!
+						throw std::runtime_error("Static service has different checksum!");
+					}
+
+					return desc;
+				}
+			};
+
+			protocol::header header;
+			package args;
+			args = pack.deserialize(XNET_TAGVAL(header), serialization::make_context(*this), package::try_next_package);
+
+			header_visitor v
+			{
+				this,
+				args
+			};
+			return header.apply_visitor(v);
 		}
 
 		xnet::service::serviceid_type service_peer::_newServiceId()

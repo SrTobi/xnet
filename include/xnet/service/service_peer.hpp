@@ -20,6 +20,8 @@ namespace xnet {
 		{
 			template<typename Service>
 			friend class remote_service;
+			template<typename Service, typename Method>
+			class detail::specific_service_method_descriptor;
 
 			struct return_slot
 			{
@@ -65,7 +67,7 @@ namespace xnet {
 
 				std::tuple<FArgs...> arguments(args...);
 				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
-				return _make_call_package(serviceName, desc.checksum(), desc.resolve_method(method), _make_return_id<Ret>(handler, excpHandler), arg_pack);
+				return _make_call_package(serviceName, desc.checksum(), desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler), arg_pack);
 			}
 
 			template<typename Service, typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
@@ -103,7 +105,7 @@ namespace xnet {
 			template<typename Service>
 			std::shared_ptr<Service> get_service(const std::string& name) const
 			{
-				static_assert(is_service<Service>::value, "Service must be a service!");
+				static_assert(is_service<Service>::value || std::is_same<Service, generic_service>::value, "Service must be a service/generic service!");
 				auto it = _namedServices.find(name);
 				if (it == _namedServices.end())
 					return nullptr;
@@ -114,7 +116,14 @@ namespace xnet {
 			bool remove_service(const std::string& name);
 
 			package process_package(const package&);
+
+			template<typename Ret>
+			package _make_return_content_package(const Ret& return_value)
+			{
+				return _factory->make_package(XNET_TAGVAL(return_value), serialization::make_context(*this));
+			}
 		private:
+
 			template<typename Ret, typename RetHandler, typename ExcpHandler>
 			returnid_type _make_return_id(RetHandler&& handler, ExcpHandler&& excpHandler)
 			{

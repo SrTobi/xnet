@@ -4,8 +4,7 @@
 
 using xnet::service::remote_service;
 
-class ChatService
-	: public xnet::service::generic_service
+XNET_SERVICE(ChatService)
 {
 public:
 	virtual std::string chat(const std::string& msg) = 0;
@@ -16,8 +15,7 @@ XNET_IMPLEMENT_SERVICE_DESCRIPTOR(ChatService, desc)
 	desc.add_method("chat", &ChatService::chat);
 }
 
-class LoginService
-	: public xnet::service::generic_service
+XNET_SERVICE(LoginService)
 {
 public:
 	virtual remote_service<ChatService> login(std::string password) = 0;
@@ -46,7 +44,7 @@ class LoginServiceImpl : public LoginService
 public:
 	virtual remote_service<ChatService> login(std::string password) override
 	{
-		if (password == "test")
+		if (password != "test")
 		{
 			throw std::exception("Wrong password");
 		}

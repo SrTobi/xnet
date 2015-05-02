@@ -111,14 +111,14 @@ namespace xnet {
 			}
 
 			template<typename S>
-			void save(S& s)
+			void save(S& s) const
 			{
 				if (!_service)
 				{
 					s << serviceid_type(0);
 				}
 				else{
-					s << s.context<service_peer>()._get_service_id(_service);
+					s << s.context<service_peer>()._get_service_id(_service, typeid(Service));
 				}
 			}
 		public:
