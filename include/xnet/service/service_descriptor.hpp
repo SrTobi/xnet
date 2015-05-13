@@ -57,7 +57,7 @@ namespace xnet {
 				virtual package call(const std::shared_ptr<generic_service>& service, service_peer& peer, returnid_type retId, const package& args) const final override
 				{
 					auto return_value = _prepare_call(_method, peer, service, args);
-					return peer._make_return_content_package(return_value);
+					return peer._make_return_content_package(return_value, retId);
 				}
 
 			private:

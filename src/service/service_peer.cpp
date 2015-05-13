@@ -73,10 +73,12 @@ namespace xnet {
 				{
 					return nullptr;
 				}
+
 				package operator()(protocol::dynamic_call& call)
 				{
 					return nullptr;
 				}
+
 				package operator()(protocol::return_invokation& call)
 				{
 					return nullptr;
@@ -167,6 +169,15 @@ namespace xnet {
 			}
 
 			return id;
+		}
+
+		xnet::package service_peer::_make_return_invokation_package(const package& content, returnid_type retId)
+		{
+			protocol::header header = protocol::return_invokation
+			{
+				retId
+			};
+			return _factory->make_package(XNET_TAGVAL(header), content);
 		}
 
 		xnet::package service_peer::_make_invokation_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack)

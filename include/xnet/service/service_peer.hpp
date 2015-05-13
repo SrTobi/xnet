@@ -118,9 +118,10 @@ namespace xnet {
 			package process_package(const package&);
 
 			template<typename Ret>
-			package _make_return_content_package(const Ret& return_value)
+			package _make_return_content_package(const Ret& return_value, returnid_type retId)
 			{
-				return _factory->make_package(XNET_TAGVAL(return_value), serialization::make_context(*this));
+				auto content_package = _factory->make_package(XNET_TAGVAL(return_value), serialization::make_context(*this));
+				return _make_return_invokation_package(content_package, retId);
 			}
 		private:
 
@@ -149,6 +150,7 @@ namespace xnet {
 			}
 			serviceid_type _get_service_id(const std::shared_ptr<generic_service>& service, const std::type_info& info);
 
+			package _make_return_invokation_package(const package& content, returnid_type retId);
 			package _make_invokation_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack);
 			package _make_call_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
 
