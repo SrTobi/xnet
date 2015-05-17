@@ -142,11 +142,11 @@ namespace xnet {
 				typedef std::pair<FuncDecl, mdesc_type> func_mapping_item;
 				typedef std::vector<func_mapping_item> func_mapping;
 
-				static service_method_descriptor& add_method(const std::string& name, FuncDecl method)
+				static service_method_descriptor& add_method(const std::string& name, FuncDecl method, funcid_type id)
 				{
 					static func_mapping funcMapping;
 
-					funcMapping.emplace_back(method, mdesc_type{ method, static_cast<funcid_type>(funcMapping.size() + 1) });
+					funcMapping.emplace_back(method, mdesc_type{ method, id });
 
 					/* TODOD:
 					 *if (!res.second)
@@ -187,7 +187,7 @@ namespace xnet {
 			template<typename Ret, typename... Args>
 			service_descriptor& add_method(const std::string& name, Ret (Service::*method)(Args...))
 			{
-				auto& m = func_storage<Ret(Service::*)(Args...)>::add_method(name, method);
+				auto& m = func_storage<Ret(Service::*)(Args...)>::add_method(name, method, _methods.size() + 1);
 				_methods.push_back(&m);
 				return *this;
 			}
