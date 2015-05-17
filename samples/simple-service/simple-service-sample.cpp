@@ -10,7 +10,7 @@ public:
 	virtual std::string chat(const std::string& msg) = 0;
 };
 
-XNET_IMPLEMENT_SERVICE_DESCRIPTOR(ChatService, desc)
+XNET_IMPLEMENT_SERVICE_DESCRIPTOR(,ChatService, desc)
 {
 	desc.add_method("chat", &ChatService::chat);
 }
@@ -21,7 +21,7 @@ public:
 	virtual remote_service<ChatService> login(std::string password) = 0;
 };
 
-XNET_IMPLEMENT_SERVICE_DESCRIPTOR(LoginService, desc)
+XNET_IMPLEMENT_SERVICE_DESCRIPTOR(,LoginService, desc)
 {
 	desc.add_method("login", &LoginService::login);
 }

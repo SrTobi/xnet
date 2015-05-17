@@ -220,16 +220,16 @@ namespace xnet {
 			return detail::service_descriptor_getter<Service>::get();
 		}
 
-#define XNET_IMPLEMENT_SERVICE_DESCRIPTOR_NAMED(_service, _name, _desk)	\
-		void _Xnet_init_service_##_service##_descriptor(::xnet::service::service_descriptor<_service>& _desk); \
-		namespace xnet_detail { const ::xnet::service::service_descriptor<_service> _Xnet_##_service##_descriptor(_name, \
-		[](::xnet::service::service_descriptor<_service>& desk){ _Xnet_init_service_##_service##_descriptor(desk); }); }\
-		namespace xnet {namespace service { const service_descriptor<_service>& detail::service_descriptor_getter<_service>::get() { return ::xnet_detail::_Xnet_##_service##_descriptor;}\
-		const generic_service_descriptor& abstract_service<_service>::_descriptor() const {return ::xnet_detail::_Xnet_##_service##_descriptor;}}} \
-		void _Xnet_init_service_##_service##_descriptor(::xnet::service::service_descriptor<_service>& _desk)
+#define XNET_IMPLEMENT_SERVICE_DESCRIPTOR_NAMED(_nspace, _service, _name, _desk)	\
+		void _Xnet_init_service_##_service##_descriptor(::xnet::service::service_descriptor<_nspace::_service>& _desk); \
+		namespace xnet_detail { const ::xnet::service::service_descriptor<_nspace::_service> _Xnet_##_service##_descriptor(_name, \
+		[](::xnet::service::service_descriptor<_nspace::_service>& desk){ _Xnet_init_service_##_service##_descriptor(desk); }); }\
+		namespace xnet {namespace service { const service_descriptor<_nspace::_service>& detail::service_descriptor_getter<_nspace::_service>::get() { return ::xnet_detail::_Xnet_##_service##_descriptor;}\
+		const generic_service_descriptor& abstract_service<_nspace::_service>::_descriptor() const {return ::xnet_detail::_Xnet_##_service##_descriptor;}}} \
+		void _Xnet_init_service_##_service##_descriptor(::xnet::service::service_descriptor<_nspace::_service>& _desk)
 
-#define XNET_IMPLEMENT_SERVICE_DESCRIPTOR(_service, _desk)	\
-			XNET_IMPLEMENT_SERVICE_DESCRIPTOR_NAMED(_service, #_service, _desk)
+#define XNET_IMPLEMENT_SERVICE_DESCRIPTOR(_nspace, _service, _desk)	\
+			XNET_IMPLEMENT_SERVICE_DESCRIPTOR_NAMED(_nspace, _service, #_service, _desk)
 	}
 }
 
