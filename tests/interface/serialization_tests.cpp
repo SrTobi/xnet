@@ -30,6 +30,14 @@ namespace serialization_test {
 		bool ok() { return number == I; }
 	};
 
+	struct EmptyStruct
+	{
+		template<typename S>
+		void serialize(S& s)
+		{
+		}
+	};
+
 	struct SerializationTestClass
 	{
 		enum reference_init_t
@@ -51,6 +59,7 @@ namespace serialization_test {
 		std::array<int, 5> mArrayMember;
 		TestEnum mEnumMember = TestEnum::B;
 		boost::variant<int, std::string> mVariantMember = 4;
+		EmptyStruct mEmptyStructMember;
 
 
 		SerializationTestClass()
@@ -84,7 +93,7 @@ namespace serialization_test {
 			s.context<NumberContext<3>>().number = 3;
 			s & mBoolMember & mIntMember & mStringMember & mPairMember & mTupleMember & mForwardListMember
 				& mListMember & mMapMember & mSetMember & mUnorderedSetMember & mUnorderedMapMember & mArrayMember
-				& mEnumMember & mVariantMember;
+				& mEnumMember & mVariantMember & mEmptyStructMember;
 		}
 
 		bool operator ==(const SerializationTestClass& right) const
