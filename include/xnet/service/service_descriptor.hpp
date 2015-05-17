@@ -80,7 +80,7 @@ namespace xnet {
 				template<typename Ret, typename... FArgs, typename... Args, int... Sq>
 				Ret _do_call(Ret(Service::*method)(FArgs...), Service& service, std::tuple<Args...>& args, seq<Sq...>) const
 				{
-					return (service.*method)(std::get<Sq>(args)...);
+					return (service.*method)(std::move(std::get<Sq>(args))...);
 				}
 
 			private:
