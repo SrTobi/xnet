@@ -2,6 +2,7 @@
 #ifndef _XNET_SERVICE_SERVICE_DESCRIPTOR_HPP
 #define _XNET_SERVICE_SERVICE_DESCRIPTOR_HPP
 
+#include <exception>
 #include "../package.hpp"
 #include "generic_service.hpp"
 
@@ -56,8 +57,14 @@ namespace xnet {
 
 				virtual package call(const std::shared_ptr<generic_service>& service, service_peer& peer, returnid_type retId, const package& args) const final override
 				{
-					auto return_value = _prepare_call(_method, peer, service, args);
-					return peer._make_return_content_package(return_value, retId);
+					try {
+						const auto return_value = _prepare_call(_method, peer, service, args);
+						return peer._make_return_content_package(return_value, retId);
+					}
+					catch (const std::exception& e)
+					{
+						return peer._make_exception_package(e, retId);
+					}
 				}
 
 			private:

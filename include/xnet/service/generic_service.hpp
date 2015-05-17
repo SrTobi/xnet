@@ -6,8 +6,10 @@
 #include <assert.h>
 
 namespace xnet {
-	namespace service
-	{
+	namespace service {
+		namespace internal {
+			class remote_service_backend;
+		}
 		typedef uint16_t funcid_type;
 		typedef uint32_t returnid_type;
 		typedef uint16_t serviceid_type;
@@ -21,11 +23,17 @@ namespace xnet {
 			friend class service_peer;
 			template<typename Service>
 			friend class remote_service;
+			friend class internal::remote_service_backend;
 		public:
+			generic_service();
 			virtual ~generic_service();
 
 		protected:
 			virtual const generic_service_descriptor& _descriptor() const = 0;
+		private:
+			enum remote_tag_t { remote_tag };
+			generic_service(remote_tag_t);
+
 		private:
 			const bool _local = true;
 		};
@@ -35,7 +43,6 @@ namespace xnet {
 			: public generic_service
 		{
 			friend class service_peer;
-
 		protected:
 			virtual const generic_service_descriptor& _descriptor() const override final;
 		};

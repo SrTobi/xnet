@@ -106,7 +106,7 @@ namespace xnet {
 				else{
 					std::string checksum;
 					s >> checksum;
-					_service = s.context<service_peer>()._resolve_service_id(id, checksum);
+					_service = s.context<service_peer>()._make_incoming_service<Service>(id, checksum);
 				}
 			}
 
@@ -118,7 +118,8 @@ namespace xnet {
 					s << serviceid_type(0);
 				}
 				else{
-					s << s.context<service_peer>()._get_service_id(_service, typeid(Service));
+					s << s.context<service_peer>()._make_outgoing_service(_service, typeid(Service));
+					s << get_descriptor<Service>().checksum();
 				}
 			}
 		public:

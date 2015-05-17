@@ -1,4 +1,5 @@
 #include "xnet/service/service_peer.hpp"
+#include "remote_service_backend.hpp"
 #include "service_protocol.hpp"
 
 namespace xnet {
@@ -81,11 +82,23 @@ namespace xnet {
 
 				package operator()(protocol::return_invokation& call)
 				{
+					auto& slots = peer->_returnSlots;
+					auto it = slots.find(call.return_id);
+					if (it == slots.end())
+						throw std::runtime_error("unknown return id");
+
+					it->second.handler(args);
 					return nullptr;
 				}
 				
 				package operator()(protocol::return_exception& call)
 				{
+					auto& slots = peer->_returnSlots;
+					auto it = slots.find(call.return_id);
+					if (it == slots.end())
+						throw std::runtime_error("unknown return id");
+
+					it->second.excpHandler(call.message);
 					return nullptr;
 				}
 
@@ -146,23 +159,36 @@ namespace xnet {
 			return id;
 		}
 
-		std::shared_ptr<generic_service> service_peer::_resolve_service_id(serviceid_type id, const std::string& checksum)
+		std::shared_ptr<generic_service> service_peer::_make_incoming_service(serviceid_type id, const std::string& checksum, const std::string& desc_checksum)
 		{
-			return _idToServiceMapping.at(id);
+			if (checksum != desc_checksum)
+			{
+				throw std::runtime_error("wrong checksum");
+			}
+			auto it = _incomingServices.find(id);
+
+			if (it == _incomingServices.end())
+			{
+				auto res = std::make_shared<internal::remote_service_backend>(id);
+				_incomingServices.emplace(id, res);
+				return res;
+			}
+
+			return  it->second;
 		}
 
-		xnet::service::serviceid_type service_peer::_get_service_id(const std::shared_ptr<generic_service>& service, const std::type_info& info)
+		xnet::service::serviceid_type service_peer::_make_outgoing_service(const std::shared_ptr<generic_service>& service, const std::type_info& info)
 		{
-			auto it = _serviceToIdMapping.find(service);
-			if (it != _serviceToIdMapping.end())
+			auto it = _outgoingServices.find(service);
+			if (it != _outgoingServices.end())
 				return it->second;
 
 			auto id = _newServiceId();
 			bool inserted;
-			std::tie(std::ignore, inserted) = _serviceToIdMapping.emplace(service, id);
+			std::tie(std::ignore, inserted) = _outgoingServices.emplace(service, id);
 			assert(inserted);
 
-			std::tie(std::ignore, inserted) = _idToServiceMapping.emplace(id, std::move(service));
+			std::tie(std::ignore, inserted) = _incomingServices.emplace(id, std::move(service));
 			if (!inserted)
 			{
 				throw std::runtime_error("Can not associate service! There are too many services associated!");
@@ -203,5 +229,14 @@ namespace xnet {
 			return _factory->make_package(XNET_TAGVAL(header), arg_pack);
 		}
 
+		xnet::package service_peer::_make_exception_package(const std::exception& e, returnid_type retId)
+		{
+			protocol::header header  = protocol::return_exception
+			{
+				retId,
+				e.what()
+			};
+			return _factory->make_package(XNET_TAGVAL(header));
+		}
 	}
 }

@@ -123,6 +123,7 @@ namespace xnet {
 				auto content_package = _factory->make_package(XNET_TAGVAL(return_value), serialization::make_context(*this));
 				return _make_return_invokation_package(content_package, retId);
 			}
+			package _make_exception_package(const std::exception& e, returnid_type retId);
 		private:
 
 			template<typename Ret, typename RetHandler, typename ExcpHandler>
@@ -131,7 +132,7 @@ namespace xnet {
 				auto rh = [handler, this](const package& p)
 				{
 					Ret return_value;
-					p.deserialize(XNET_TAGVAL(return_value), serialization::make_context(*this));
+					p.deserialize(XNET_TAGVAL(return_value), serialization::make_context(*this), package::try_next_package);
 					handler(std::move(return_value));
 				};
 
@@ -142,21 +143,26 @@ namespace xnet {
 			returnid_type _newReturnId();
 
 			returnid_type _create_return_id(std::function<void(const package&)>&& handler, std::function<void(call_error&&)> excpHandler);
-			std::shared_ptr<generic_service> _resolve_service_id(serviceid_type id, const std::string& checksum);
+
 			template<typename Service>
-			serviceid_type _get_service_id(const std::shared_ptr<const Service>& service)
+			std::shared_ptr<generic_service> _make_incoming_service(serviceid_type id, const std::string& checksum)
 			{
-				return _get_service_id(service, typeid(Service));
+				return _make_incoming_service(id, checksum, get_descriptor<Service>().checksum());
 			}
-			serviceid_type _get_service_id(const std::shared_ptr<generic_service>& service, const std::type_info& info);
+			std::shared_ptr<generic_service> _make_incoming_service(serviceid_type id, const std::string& checksum, const std::string& desc_checksum);
+			template<typename Service>
+			serviceid_type _make_outgoing_service(const std::shared_ptr<const Service>& service)
+			{
+				return _make_outgoing_service(service, typeid(Service));
+			}
+			serviceid_type _make_outgoing_service(const std::shared_ptr<generic_service>& service, const std::type_info& info);
 
 			package _make_return_invokation_package(const package& content, returnid_type retId);
 			package _make_invokation_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack);
 			package _make_call_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
-
 		private:
-			std::unordered_map<std::shared_ptr<generic_service>, serviceid_type> _serviceToIdMapping;
-			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _idToServiceMapping;
+			std::unordered_map<std::shared_ptr<generic_service>, serviceid_type> _outgoingServices;
+			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _incomingServices;
 			std::unordered_map<returnid_type, return_slot> _returnSlots;
 			std::unordered_map<std::string, std::shared_ptr<generic_service>> _namedServices;
 			package_factory* _factory;
