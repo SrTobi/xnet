@@ -16,6 +16,12 @@ namespace service_tests {
 		{}
 		onlymovable(onlymovable&&)
 		{}
+
+		template<typename S>
+		void serialize(S& s)
+		{
+			s.current_type("onlymovable");
+		}
 	};
 
 	enum class service_events
@@ -82,7 +88,7 @@ namespace service_tests {
 			return 888;
 		}
  
-		onlymovable noncopyable_test(const onlymovable&)
+		onlymovable noncopyable_test(onlymovable)
 		{
 			_observer.expect(service_events::called__noncopyable_test);
 			return onlymovable();
@@ -124,6 +130,28 @@ namespace service_tests {
 			check_call(pack);
 		}
 
+		void check_invoke__noncopyable_test()
+		{
+			_observer.set()
+				<< service_events::called__noncopyable_test;
+
+			auto pack = _client.make_invokation("default", &test_service::noncopyable_test, onlymovable());
+			check_invoke(pack);
+		}
+
+		void check_call__noncopyable_test()
+		{
+			_observer.set()
+				<< service_events::called__noncopyable_test
+				<< service_events::returned;
+
+			auto pack = _client.make_call("default", &test_service::noncopyable_test, [this](onlymovable){
+				_observer.expect(service_events::returned);
+			}, _expect_no_error_func,
+			onlymovable());
+			check_call(pack);
+		}
+
 	private:
 		void check_invoke(const xnet::package& pack)
 		{
@@ -155,6 +183,9 @@ namespace service_tests {
 	TESTX_START_FIXTURE_TEST(service_tester)
 		TESTX_FIXTURE_TEST(check_invoke__int_test);
 		TESTX_FIXTURE_TEST(check_call__int_test);
+
+		TESTX_FIXTURE_TEST(check_invoke__noncopyable_test);
+		TESTX_FIXTURE_TEST(check_call__noncopyable_test);
 	TESTX_END_FIXTURE_TEST();
 }
 
@@ -163,5 +194,6 @@ XNET_IMPLEMENT_SERVICE_DESCRIPTOR(service_tests, test_service, desc)
 {
 	using namespace service_tests;
 	desc.add_method("int_test", &test_service::int_test);
+	desc.add_method("noncopyable_test", &test_service::noncopyable_test);
 }
 
