@@ -86,9 +86,15 @@ namespace xnet {
 				{
 					std::function<void(Ret&&)> handler2 = handler;
 					std::function<void(call_error&&)> excpHandler2 = excpHandler;
+
+					assert(service.remote());
 				}
 
-				throw std::exception("Not implemented!");
+				const auto& desc = get_descriptor<Service>();
+
+				std::tuple<FArgs...> arguments(args...);
+				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
+				return _make_call_package(*service._service, desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler), arg_pack);
 			}
 
 			template<typename Service>
@@ -160,8 +166,10 @@ namespace xnet {
 			package _make_return_invokation_package(const package& content, returnid_type retId);
 			package _make_invokation_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack);
 			package _make_call_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
+			package _make_call_package(const generic_service& service, funcid_type funcId, returnid_type returnId, package arg_pack);
 		private:
 			std::unordered_map<std::shared_ptr<generic_service>, serviceid_type> _outgoingServices;
+			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _outgoingServicesById;
 			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _incomingServices;
 			std::unordered_map<returnid_type, return_slot> _returnSlots;
 			std::unordered_map<std::string, std::shared_ptr<generic_service>> _namedServices;

@@ -32,9 +32,9 @@ class ChatServiceImpl : public ChatService
 public:
 	virtual std::string chat(const std::string& msg) override
 	{
-		std::cout << "From client: " << msg << std::endl << "Answer: " << std::endl;
+		std::cout << "From client: " << msg << std::endl << "Answer: ";
 		std::string answ;
-		std::cin >> answ;
+		std::getline(std::cin, answ);
 		return answ;
 	}
 };
@@ -66,7 +66,8 @@ int main()
 	while (!chat_service)
 	{
 		std::cout << "Enter password: ";
-		std::string pw; std::cin >> pw;
+		std::string pw;
+		std::getline(std::cin, pw);
 		auto pack = clientPeer.make_call("loginService", &LoginService::login, [&chat_service](remote_service<ChatService>& rem){
 			std::cout << "Logged in!" << std::endl;
 			chat_service = rem;
@@ -82,7 +83,7 @@ int main()
 	{
 		std::string msg;
 		std::cout << "Enter message for server: ";
-		std::cin >> msg;
+		std::getline(std::cin, msg);
 		auto pack = clientPeer.make_call(chat_service,
 									&ChatService::chat,
 									[](std::string m) { std::cout << "Message from server: " << m << std::endl; },

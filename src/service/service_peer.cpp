@@ -72,12 +72,17 @@ namespace xnet {
 
 				package operator()(protocol::dynamic_invokation& call)
 				{
+					std::shared_ptr<generic_service> service;
+					auto& desc = _dynamic_descriptor(call.service_id, service);
+					desc.invoke(service, *peer, call.func_id, args);
 					return nullptr;
 				}
 
 				package operator()(protocol::dynamic_call& call)
 				{
-					return nullptr;
+					std::shared_ptr<generic_service> service;
+					auto& desc = _dynamic_descriptor(call.service_id, service);
+					return desc.call(service, *peer, call.func_id, call.return_id, args);
 				}
 
 				package operator()(protocol::return_invokation& call)
@@ -124,6 +129,19 @@ namespace xnet {
 					}
 
 					return desc;
+				}
+
+				const generic_service_descriptor& _dynamic_descriptor(serviceid_type serviceId, std::shared_ptr<generic_service>& service)
+				{
+					auto it = peer->_outgoingServicesById.find(serviceId);
+					if (it == peer->_outgoingServicesById.end())
+					{
+						// TODO: throw exception?!
+						throw std::runtime_error("unknown service id");
+					}
+					service = it->second;
+
+					return service->_descriptor();
 				}
 			};
 
@@ -188,7 +206,7 @@ namespace xnet {
 			std::tie(std::ignore, inserted) = _outgoingServices.emplace(service, id);
 			assert(inserted);
 
-			std::tie(std::ignore, inserted) = _incomingServices.emplace(id, std::move(service));
+			std::tie(std::ignore, inserted) = _outgoingServicesById.emplace(id, std::move(service));
 			if (!inserted)
 			{
 				throw std::runtime_error("Can not associate service! There are too many services associated!");
@@ -223,6 +241,20 @@ namespace xnet {
 			{
 				serviceName,
 				checksum,
+				funcId,
+				returnId
+			};
+			return _factory->make_package(XNET_TAGVAL(header), arg_pack);
+		}
+
+		xnet::package service_peer::_make_call_package(const generic_service& service, funcid_type funcId, returnid_type returnId, package arg_pack)
+		{
+			assert(!service._local);
+			const auto& backend = static_cast<const internal::remote_service_backend&>(service);
+			
+			protocol::header header = protocol::dynamic_call
+			{
+				backend.id(),
 				funcId,
 				returnId
 			};
