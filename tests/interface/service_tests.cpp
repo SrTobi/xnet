@@ -129,6 +129,27 @@ namespace service_tests {
 			check_call(pack);
 		}
 
+		void check_invoke__void_params_test()
+		{
+			_observer.set()
+				<< service_events::called__void_params_test;
+
+			auto pack = _client.make_invokation("default", &test_service::void_params_test, 666);
+			check_invoke(pack);
+		}
+
+		void check_call__void_params_test()
+		{
+			_observer.set()
+				<< service_events::called__void_params_test
+				<< service_events::returned;
+
+			auto pack = _client.make_call("default", &test_service::void_params_test, [this](){
+				_observer.expect(service_events::returned);
+			}, _expect_no_error_func,
+			666);
+			check_call(pack);
+		}
 
 		void check_invoke__int_test()
 		{
@@ -200,12 +221,14 @@ namespace service_tests {
 	private:
 		void check_invoke(const xnet::package& pack)
 		{
+			BOOST_CHECK(pack);
 			auto ret_pack = _server.process_package(pack);
 			BOOST_CHECK(!ret_pack);
 		}
 
 		void check_call(const xnet::package& pack)
 		{
+			BOOST_CHECK(pack);
 			auto ret_pack = _server.process_package(pack);
 			BOOST_CHECK(ret_pack);
 			auto null_pack = _client.process_package(ret_pack);
@@ -231,6 +254,9 @@ namespace service_tests {
 
 		TESTX_FIXTURE_TEST(check_invoke__void_test);
 		TESTX_FIXTURE_TEST(check_call__void_test);
+
+		TESTX_FIXTURE_TEST(check_invoke__void_params_test);
+		TESTX_FIXTURE_TEST(check_call__void_params_test);
 
 		TESTX_FIXTURE_TEST(check_invoke__int_params_test);
 		TESTX_FIXTURE_TEST(check_call__int_params_test);
