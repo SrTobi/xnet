@@ -38,6 +38,15 @@ namespace xnet {
 			  typedef seq<S...> type;
 			};
 
+			struct void_substitute
+			{
+				template<typename S>
+				void serialize(S& s)
+				{
+					s.current_type("void");
+				}
+			};
+
 
 			template<typename Service, typename Method>
 			class specific_service_method_descriptor
@@ -69,7 +78,11 @@ namespace xnet {
 
 			private:
 				template<typename Ret, typename... FArgs>
-				Ret _prepare_call(Ret (Service::*method)(FArgs...), service_peer& peer, const std::shared_ptr<generic_service>& service, const package& arg_pack) const
+				typename std::conditional<
+					std::is_void<Ret>::value,
+					void_substitute,
+					Ret>
+				::type _prepare_call(Ret (Service::*method)(FArgs...), service_peer& peer, const std::shared_ptr<generic_service>& service, const package& arg_pack) const
 				{
 					std::tuple<typename std::decay<FArgs>::type...> args;
 					arg_pack.deserialize(args, serialization::make_context(peer), package::try_next_package);
@@ -81,6 +94,13 @@ namespace xnet {
 				Ret _do_call(Ret(Service::*method)(FArgs...), Service& service, std::tuple<Args...>& args, seq<Sq...>) const
 				{
 					return (service.*method)(std::move(std::get<Sq>(args))...);
+				}
+
+				template<typename... FArgs, typename... Args, int... Sq>
+				void_substitute _do_call(void(Service::*method)(FArgs...), Service& service, std::tuple<Args...>& args, seq<Sq...>) const
+				{
+					(service.*method)(std::move(std::get<Sq>(args))...);
+					return {};
 				}
 
 			private:
