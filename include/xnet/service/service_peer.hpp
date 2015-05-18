@@ -13,6 +13,17 @@
 
 namespace xnet {
 	namespace service {
+		namespace detail {
+			template<typename Target, typename Source>
+			struct ref_or_val
+			{
+				typedef typename std::conditional<
+					std::is_same<Target, Source>::value,
+					const Target&,
+					Target>::type type;
+
+			};
+		}
 		template<typename Service>
 		class remote_service;
 
@@ -40,7 +51,7 @@ namespace xnet {
 
 				const auto& desc = get_descriptor<Service>();
 
-				std::tuple<FArgs&...> arguments(args...);
+				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
 				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
 				return _make_invokation_package(serviceName, desc.checksum(), desc.resolve_method(method).id(), arg_pack);
 			}
@@ -65,7 +76,7 @@ namespace xnet {
 
 				const auto& desc = get_descriptor<Service>();
 
-				std::tuple<FArgs&...> arguments(args...);
+				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
 				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
 				return _make_call_package(serviceName, desc.checksum(), desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler), arg_pack);
 			}
@@ -92,7 +103,7 @@ namespace xnet {
 
 				const auto& desc = get_descriptor<Service>();
 
-				std::tuple<FArgs&...> arguments(args...);
+				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
 				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
 				return _make_call_package(*service._service, desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler), arg_pack);
 			}
