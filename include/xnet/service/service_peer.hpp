@@ -67,10 +67,8 @@ namespace xnet {
 				static_assert(is_service<Service>::value, "Service must be a service!");
 				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
 				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value..., true>::value, "Provided arguments can not be converted to required types!");
-				static_assert(std::is_convertible<RetHandler, std::function<void(Ret&&)>>::value, "RetHandler must be convertible to void(Ret)!");
 				static_assert(std::is_convertible<ExcpHandler, std::function<void(call_error&&)>>::value, "RetHandler must be convertible to void(Ret)!");
 				{
-					std::function<void(Ret&&)> handler2 = handler;
 					std::function<void(call_error&&)> excpHandler2 = excpHandler;
 				}
 
@@ -78,7 +76,7 @@ namespace xnet {
 
 				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
 				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
-				return _make_call_package(serviceName, desc.checksum(), desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler), arg_pack);
+				return _make_call_package(serviceName, desc.checksum(), desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler, std::is_void<Ret>()), arg_pack);
 			}
 
 			template<typename Service, typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
@@ -92,10 +90,8 @@ namespace xnet {
 				static_assert(is_service<Service>::value, "Service must be a service!");
 				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
 				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value..., true>::value, "Provided arguments can not be converted to required types!");
-				static_assert(std::is_convertible<RetHandler, std::function<void(Ret&&)>>::value, "RetHandler must be convertible to void(Ret)!");
 				static_assert(std::is_convertible<ExcpHandler, std::function<void(call_error&&)>>::value, "RetHandler must be convertible to void(Ret)!");
 				{
-					std::function<void(Ret&&)> handler2 = handler;
 					std::function<void(call_error&&)> excpHandler2 = excpHandler;
 
 					assert(service.remote());
@@ -105,7 +101,7 @@ namespace xnet {
 
 				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
 				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
-				return _make_call_package(*service._service, desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler), arg_pack);
+				return _make_call_package(*service._service, desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler, std::is_void<Ret>()), arg_pack);
 			}
 
 			template<typename Service>
@@ -144,13 +140,32 @@ namespace xnet {
 		private:
 
 			template<typename Ret, typename RetHandler, typename ExcpHandler>
-			returnid_type _make_return_id(RetHandler&& handler, ExcpHandler&& excpHandler)
+			returnid_type _make_return_id(RetHandler&& handler, ExcpHandler&& excpHandler, const std::false_type&)
 			{
+				{
+					static_assert(std::is_convertible<RetHandler, std::function<void(Ret&&)>>::value, "RetHandler must be convertible to void(Ret)!");
+					std::function<void(Ret&&)> handler2 = handler;
+				}
 				auto rh = [handler, this](const package& p)
 				{
 					Ret return_value;
 					p.deserialize(XNET_TAGVAL(return_value), serialization::make_context(*this), package::try_next_package);
 					handler(std::move(return_value));
+				};
+
+				return _create_return_id(std::move(rh), excpHandler);
+			}
+
+			template<typename Ret, typename RetHandler, typename ExcpHandler>
+			returnid_type _make_return_id(RetHandler&& handler, ExcpHandler&& excpHandler, const std::true_type&)
+			{
+				{
+					static_assert(std::is_convertible<RetHandler, std::function<void()>>::value, "RetHandler must be convertible to void()!");
+					std::function<void()> handler2 = handler;
+				}
+				auto rh = [handler](const package& p)
+				{
+					handler();
 				};
 
 				return _create_return_id(std::move(rh), excpHandler);
