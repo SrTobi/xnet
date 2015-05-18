@@ -108,6 +108,28 @@ namespace service_tests {
 			_server.add_service("default",  std::make_shared<test_service>(_observer));
 		}
 
+		void check_invoke__void_test()
+		{
+			_observer.set()
+				<< service_events::called__void_test;
+
+			auto pack = _client.make_invokation("default", &test_service::void_test);
+			check_invoke(pack);
+		}
+
+		void check_call__void_test()
+		{
+			_observer.set()
+				<< service_events::called__void_test
+				<< service_events::returned;
+
+			auto pack = _client.make_call("default", &test_service::void_test, [this](){
+				_observer.expect(service_events::returned);
+			}, _expect_no_error_func);
+			check_call(pack);
+		}
+
+
 		void check_invoke__int_test()
 		{
 			_observer.set()
@@ -207,6 +229,9 @@ namespace service_tests {
 		TESTX_FIXTURE_TEST(check_invoke__int_test);
 		TESTX_FIXTURE_TEST(check_call__int_test);
 
+		TESTX_FIXTURE_TEST(check_invoke__void_test);
+		TESTX_FIXTURE_TEST(check_call__void_test);
+
 		TESTX_FIXTURE_TEST(check_invoke__int_params_test);
 		TESTX_FIXTURE_TEST(check_call__int_params_test);
 
@@ -219,6 +244,8 @@ namespace service_tests {
 XNET_IMPLEMENT_SERVICE_DESCRIPTOR(service_tests, test_service, desc)
 {
 	using namespace service_tests;
+	desc.add_method("void_test", &test_service::void_test);
+	desc.add_method("void_test", &test_service::void_params_test);
 	desc.add_method("int_test", &test_service::int_test);
 	desc.add_method("int_params_test", &test_service::int_params_test);
 	desc.add_method("noncopyable_test", &test_service::noncopyable_test);
