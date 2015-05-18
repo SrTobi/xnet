@@ -130,6 +130,29 @@ namespace service_tests {
 			check_call(pack);
 		}
 
+		void check_invoke__int_params_test()
+		{
+			_observer.set()
+				<< service_events::called__int_params_test;
+
+			auto pack = _client.make_invokation("default", &test_service::int_params_test, "devil");
+			check_invoke(pack);
+		}
+
+		void check_call__int_params_test()
+		{
+			_observer.set()
+				<< service_events::called__int_params_test
+				<< service_events::returned;
+
+			auto pack = _client.make_call("default", &test_service::int_params_test, [this](int i){
+				_observer.expect(service_events::returned);
+				BOOST_CHECK_EQUAL(i, 888);
+			}, _expect_no_error_func,
+			"devil");
+			check_call(pack);
+		}
+
 		void check_invoke__noncopyable_test()
 		{
 			_observer.set()
@@ -184,6 +207,9 @@ namespace service_tests {
 		TESTX_FIXTURE_TEST(check_invoke__int_test);
 		TESTX_FIXTURE_TEST(check_call__int_test);
 
+		TESTX_FIXTURE_TEST(check_invoke__int_params_test);
+		TESTX_FIXTURE_TEST(check_call__int_params_test);
+
 		TESTX_FIXTURE_TEST(check_invoke__noncopyable_test);
 		TESTX_FIXTURE_TEST(check_call__noncopyable_test);
 	TESTX_END_FIXTURE_TEST();
@@ -194,6 +220,7 @@ XNET_IMPLEMENT_SERVICE_DESCRIPTOR(service_tests, test_service, desc)
 {
 	using namespace service_tests;
 	desc.add_method("int_test", &test_service::int_test);
+	desc.add_method("int_params_test", &test_service::int_params_test);
 	desc.add_method("noncopyable_test", &test_service::noncopyable_test);
 }
 
