@@ -81,6 +81,23 @@ namespace xnet {
 				_call(serviceName, desc.checksum(), desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler, std::is_void<Ret>()), arg_pack);
 			}
 
+			template<typename Service, typename Ret, typename... FArgs, typename... Args>
+			void invoke(const remote_service<Service>& service, Ret(Service::*method)(FArgs...), Args&&... args)
+			{
+				static_assert(is_service<Service>::value, "Service must be a service!");
+				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
+				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value..., true>::value, "Provided arguments can not be converted to required types!");
+				{
+					assert(service.remote());
+				}
+
+				const auto& desc = get_descriptor<Service>();
+
+				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
+				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
+				_invoke(*service._service, desc.resolve_method(method).id(), arg_pack);
+			}
+
 			template<typename Service, typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
 			void call(
 				const remote_service<Service>& service,
@@ -193,6 +210,7 @@ namespace xnet {
 
 			package _make_return_invokation_package(const package& content, returnid_type retId);
 			void _invoke(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack);
+			void _invoke(const generic_service& service, funcid_type funcId, package arg_pack);
 			void _call(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
 			void _call(const generic_service& service, funcid_type funcId, returnid_type returnId, package arg_pack);
 		private:

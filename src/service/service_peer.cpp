@@ -232,6 +232,19 @@ namespace xnet {
 			_emit(_factory->make_package(XNET_TAGVAL(header), arg_pack));
 		}
 
+		void service_peer::_invoke(const generic_service& service, funcid_type funcId, package arg_pack)
+		{
+			assert(!service._local);
+			const auto& backend = static_cast<const internal::remote_service_backend&>(service);
+			
+			protocol::header header = protocol::dynamic_invokation
+			{
+				backend.id(),
+				funcId
+			};
+			_emit(_factory->make_package(XNET_TAGVAL(header), arg_pack));
+		}
+
 		void service_peer::_call(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack)
 		{
 			protocol::header header = protocol::static_call
