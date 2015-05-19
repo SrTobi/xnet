@@ -92,6 +92,7 @@ namespace xnet {
 						throw std::runtime_error("unknown return id");
 
 					it->second.handler(args);
+					slots.erase(it);
 				}
 				
 				void operator()(protocol::return_exception& call)
@@ -152,6 +153,11 @@ namespace xnet {
 				args
 			};
 			header.apply_visitor(v);
+		}
+
+		std::size_t service_peer::open_return_slots() const
+		{
+			return _returnSlots.size();
 		}
 
 		xnet::service::serviceid_type service_peer::_newServiceId()

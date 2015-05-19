@@ -148,6 +148,7 @@ namespace xnet {
 			bool remove_service(const std::string& name);
 
 			void process_package(const package&);
+			std::size_t open_return_slots() const;
 
 			template<typename Ret>
 			package _make_return_content_package(const Ret& return_value, returnid_type retId)
