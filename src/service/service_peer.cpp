@@ -221,7 +221,7 @@ namespace xnet {
 			return _factory->make_package(XNET_TAGVAL(header), content);
 		}
 
-		xnet::package service_peer::_make_invokation_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack)
+		void service_peer::_invoke(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack)
 		{
 			protocol::header header = protocol::static_invokation
 			{
@@ -229,10 +229,10 @@ namespace xnet {
 				checksum,
 				funcId
 			};
-			return _factory->make_package(XNET_TAGVAL(header), arg_pack);
+			_emit(_factory->make_package(XNET_TAGVAL(header), arg_pack));
 		}
 
-		xnet::package service_peer::_make_call_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack)
+		void service_peer::_call(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack)
 		{
 			protocol::header header = protocol::static_call
 			{
@@ -241,10 +241,10 @@ namespace xnet {
 				funcId,
 				returnId
 			};
-			return _factory->make_package(XNET_TAGVAL(header), arg_pack);
+			_emit(_factory->make_package(XNET_TAGVAL(header), arg_pack));
 		}
 
-		xnet::package service_peer::_make_call_package(const generic_service& service, funcid_type funcId, returnid_type returnId, package arg_pack)
+		void service_peer::_call(const generic_service& service, funcid_type funcId, returnid_type returnId, package arg_pack)
 		{
 			assert(!service._local);
 			const auto& backend = static_cast<const internal::remote_service_backend&>(service);
@@ -255,7 +255,7 @@ namespace xnet {
 				funcId,
 				returnId
 			};
-			return _factory->make_package(XNET_TAGVAL(header), arg_pack);
+			_emit(_factory->make_package(XNET_TAGVAL(header), arg_pack));
 		}
 
 		xnet::package service_peer::_make_exception_package(const std::exception& e, returnid_type retId)

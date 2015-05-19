@@ -85,14 +85,13 @@ int main()
 		std::cout << "Enter password: ";
 		std::string pw;
 		std::getline(std::cin, pw);
-		auto pack = clientPeer.make_call("loginService", &LoginService::login, [&chat_service](remote_service<ChatService>& rem){
+		clientPeer.call("loginService", &LoginService::login, [&chat_service](remote_service<ChatService>& rem){
 			std::cout << "Logged in!" << std::endl;
 			chat_service = rem;
 		}, [](const xnet::service::call_error& e){
 			std::cout << "Error while logging in: " << e.what() << std::endl;
 		}, pw);
 
-		post_to_server(pack);
 		io_service.run();
 		io_service.reset();
 	}
@@ -102,13 +101,12 @@ int main()
 		std::string msg;
 		std::cout << "Enter message for server: ";
 		std::getline(std::cin, msg);
-		auto pack = clientPeer.make_call(chat_service,
-									&ChatService::chat,
-									[](std::string m) { std::cout << "Message from server: " << m << std::endl; },
-									[](const call_error& e){ std::cout << "Error while chatting: " << e.what() << std::endl; },
-									msg);
+		clientPeer.call(chat_service,
+						&ChatService::chat,
+						[](std::string m) { std::cout << "Message from server: " << m << std::endl; },
+						[](const call_error& e){ std::cout << "Error while chatting: " << e.what() << std::endl; },
+						msg);
 
-		post_to_server(pack);
 		io_service.run();
 		io_service.reset();
 	}

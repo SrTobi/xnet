@@ -45,7 +45,7 @@ namespace xnet {
 			service_peer(package_factory* factory, const emit_function& emitFunc);
 
 			template<typename Service, typename Ret, typename... FArgs, typename... Args>
-			package make_invokation(const std::string& serviceName, Ret(Service::*method)(FArgs...), Args&&... args)
+			void invoke(const std::string& serviceName, Ret(Service::*method)(FArgs...), Args&&... args)
 			{
 				static_assert(is_service<Service>::value, "Service must be a service!");
 				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
@@ -55,11 +55,11 @@ namespace xnet {
 
 				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
 				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
-				return _make_invokation_package(serviceName, desc.checksum(), desc.resolve_method(method).id(), arg_pack);
+				_invoke(serviceName, desc.checksum(), desc.resolve_method(method).id(), arg_pack);
 			}
 
 			template<typename Service, typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
-			package make_call(
+			void call(
 				const std::string& serviceName,
 				Ret(Service::*method)(FArgs...),
 				RetHandler&& handler,
@@ -78,11 +78,11 @@ namespace xnet {
 
 				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
 				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
-				return _make_call_package(serviceName, desc.checksum(), desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler, std::is_void<Ret>()), arg_pack);
+				_call(serviceName, desc.checksum(), desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler, std::is_void<Ret>()), arg_pack);
 			}
 
 			template<typename Service, typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
-			package make_call(
+			void call(
 				const remote_service<Service>& service,
 				Ret(Service::*method)(FArgs...),
 				RetHandler&& handler,
@@ -103,7 +103,7 @@ namespace xnet {
 
 				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
 				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
-				return _make_call_package(*service._service, desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler, std::is_void<Ret>()), arg_pack);
+				_call(*service._service, desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler, std::is_void<Ret>()), arg_pack);
 			}
 
 			template<typename Service>
@@ -192,9 +192,9 @@ namespace xnet {
 			serviceid_type _make_outgoing_service(const std::shared_ptr<generic_service>& service, const std::type_info& info);
 
 			package _make_return_invokation_package(const package& content, returnid_type retId);
-			package _make_invokation_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack);
-			package _make_call_package(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
-			package _make_call_package(const generic_service& service, funcid_type funcId, returnid_type returnId, package arg_pack);
+			void _invoke(const std::string& serviceName, const std::string& checksum, funcid_type funcId, package arg_pack);
+			void _call(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
+			void _call(const generic_service& service, funcid_type funcId, returnid_type returnId, package arg_pack);
 		private:
 			std::unordered_map<std::shared_ptr<generic_service>, serviceid_type> _outgoingServices;
 			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _outgoingServicesById;
