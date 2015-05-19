@@ -31,6 +31,8 @@ namespace service_tests {
 		called__int_test,
 		called__int_params_test,
 		called__noncopyable_test,
+		client_process_package,
+		server_process_package,
 		returned,
 		_num_events
 	};
@@ -45,6 +47,8 @@ namespace service_tests {
 			"called__int_test",
 			"called__int_params_test",
 			"called__noncopyable_test",
+			"client_process_package",
+			"server_process_package",
 			"returned"
 		};
 		out << evt_names[(int)value];
@@ -102,8 +106,8 @@ namespace service_tests {
 	{
 	public:
 		service_tester()
-			: _client(&_factory)
-			, _server(&_factory)
+			: _client(&_factory, [this](xnet::package p) {_observer.expect(service_events::server_process_package); _server.process_package(p); })
+			, _server(&_factory, [this](xnet::package p) {_observer.expect(service_events::client_process_package); _client.process_package(p); })
 		{
 			_server.add_service("default",  std::make_shared<test_service>(_observer));
 		}
@@ -111,6 +115,7 @@ namespace service_tests {
 		void check_invoke__void_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__void_test;
 
 			auto pack = _client.make_invokation("default", &test_service::void_test);
@@ -120,7 +125,9 @@ namespace service_tests {
 		void check_call__void_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__void_test
+				<< service_events::client_process_package
 				<< service_events::returned;
 
 			auto pack = _client.make_call("default", &test_service::void_test, [this](){
@@ -132,6 +139,7 @@ namespace service_tests {
 		void check_invoke__void_params_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__void_params_test;
 
 			auto pack = _client.make_invokation("default", &test_service::void_params_test, 666);
@@ -141,7 +149,9 @@ namespace service_tests {
 		void check_call__void_params_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__void_params_test
+				<< service_events::client_process_package
 				<< service_events::returned;
 
 			auto pack = _client.make_call("default", &test_service::void_params_test, [this](){
@@ -154,6 +164,7 @@ namespace service_tests {
 		void check_invoke__int_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__int_test;
 
 			auto pack = _client.make_invokation("default", &test_service::int_test);
@@ -163,7 +174,9 @@ namespace service_tests {
 		void check_call__int_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__int_test
+				<< service_events::client_process_package
 				<< service_events::returned;
 
 			auto pack = _client.make_call("default", &test_service::int_test, [this](int i){
@@ -176,6 +189,7 @@ namespace service_tests {
 		void check_invoke__int_params_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__int_params_test;
 
 			auto pack = _client.make_invokation("default", &test_service::int_params_test, "devil");
@@ -185,7 +199,9 @@ namespace service_tests {
 		void check_call__int_params_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__int_params_test
+				<< service_events::client_process_package
 				<< service_events::returned;
 
 			auto pack = _client.make_call("default", &test_service::int_params_test, [this](int i){
@@ -199,6 +215,7 @@ namespace service_tests {
 		void check_invoke__noncopyable_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__noncopyable_test;
 
 			auto pack = _client.make_invokation("default", &test_service::noncopyable_test, onlymovable());
@@ -208,7 +225,9 @@ namespace service_tests {
 		void check_call__noncopyable_test()
 		{
 			_observer.set()
+				<< service_events::server_process_package
 				<< service_events::called__noncopyable_test
+				<< service_events::client_process_package
 				<< service_events::returned;
 
 			auto pack = _client.make_call("default", &test_service::noncopyable_test, [this](onlymovable){
@@ -222,17 +241,15 @@ namespace service_tests {
 		void check_invoke(const xnet::package& pack)
 		{
 			BOOST_CHECK(pack);
-			auto ret_pack = _server.process_package(pack);
-			BOOST_CHECK(!ret_pack);
+			_observer.expect(service_events::server_process_package);
+			_server.process_package(pack);
 		}
 
 		void check_call(const xnet::package& pack)
 		{
 			BOOST_CHECK(pack);
-			auto ret_pack = _server.process_package(pack);
-			BOOST_CHECK(ret_pack);
-			auto null_pack = _client.process_package(ret_pack);
-			BOOST_CHECK(!null_pack);
+			_observer.expect(service_events::server_process_package);
+			_server.process_package(pack);
 		}
 
 	private:
@@ -249,14 +266,14 @@ namespace service_tests {
 
 
 	TESTX_START_FIXTURE_TEST(service_tester)
-		TESTX_FIXTURE_TEST(check_invoke__int_test);
-		TESTX_FIXTURE_TEST(check_call__int_test);
-
 		TESTX_FIXTURE_TEST(check_invoke__void_test);
 		TESTX_FIXTURE_TEST(check_call__void_test);
 
 		TESTX_FIXTURE_TEST(check_invoke__void_params_test);
 		TESTX_FIXTURE_TEST(check_call__void_params_test);
+
+		TESTX_FIXTURE_TEST(check_invoke__int_test);
+		TESTX_FIXTURE_TEST(check_call__int_test);
 
 		TESTX_FIXTURE_TEST(check_invoke__int_params_test);
 		TESTX_FIXTURE_TEST(check_call__int_params_test);

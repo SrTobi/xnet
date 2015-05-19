@@ -5,8 +5,9 @@
 namespace xnet {
 	namespace service {
 
-		service_peer::service_peer(package_factory* factory)
+		service_peer::service_peer(package_factory* factory, const emit_function& emitFunc)
 			: _factory(factory)
+			, _emit(emitFunc)
 		{
 			assert(factory);
 		}
@@ -45,9 +46,9 @@ namespace xnet {
 			return _namedServices.erase(name) > 0;
 		}
 
-		xnet::package service_peer::process_package(const package& pack)
+		void service_peer::process_package(const package& pack)
 		{
-			struct header_visitor : public boost::static_visitor<package>
+			struct header_visitor : public boost::static_visitor<void>
 			{
 				header_visitor(service_peer* peer, const package& args)
 					: peer(peer)
@@ -55,37 +56,35 @@ namespace xnet {
 				{
 				}
 
-				package operator()(protocol::static_invokation& call)
+				void operator()(protocol::static_invokation& call)
 				{
 					std::shared_ptr<generic_service> service;
 					auto& desc = _static_descriptor(call.service_name, call.service_checksum, service);
 					desc.invoke(service, *peer, call.func_id, args);
-					return nullptr;
 				}
 
-				package operator()(protocol::static_call& call)
+				void operator()(protocol::static_call& call)
 				{
 					std::shared_ptr<generic_service> service;
 					auto& desc = _static_descriptor(call.service_name, call.service_checksum, service);
-					return desc.call(service, *peer, call.func_id, call.return_id, args);
+					peer->_emit(desc.call(service, *peer, call.func_id, call.return_id, args));
 				}
 
-				package operator()(protocol::dynamic_invokation& call)
+				void operator()(protocol::dynamic_invokation& call)
 				{
 					std::shared_ptr<generic_service> service;
 					auto& desc = _dynamic_descriptor(call.service_id, service);
 					desc.invoke(service, *peer, call.func_id, args);
-					return nullptr;
 				}
 
-				package operator()(protocol::dynamic_call& call)
+				void operator()(protocol::dynamic_call& call)
 				{
 					std::shared_ptr<generic_service> service;
 					auto& desc = _dynamic_descriptor(call.service_id, service);
-					return desc.call(service, *peer, call.func_id, call.return_id, args);
+					peer->_emit(desc.call(service, *peer, call.func_id, call.return_id, args));
 				}
 
-				package operator()(protocol::return_invokation& call)
+				void operator()(protocol::return_invokation& call)
 				{
 					auto& slots = peer->_returnSlots;
 					auto it = slots.find(call.return_id);
@@ -93,10 +92,9 @@ namespace xnet {
 						throw std::runtime_error("unknown return id");
 
 					it->second.handler(args);
-					return nullptr;
 				}
 				
-				package operator()(protocol::return_exception& call)
+				void operator()(protocol::return_exception& call)
 				{
 					auto& slots = peer->_returnSlots;
 					auto it = slots.find(call.return_id);
@@ -104,7 +102,6 @@ namespace xnet {
 						throw std::runtime_error("unknown return id");
 
 					it->second.excpHandler(call.message);
-					return nullptr;
 				}
 
 				service_peer* peer;
@@ -154,7 +151,7 @@ namespace xnet {
 				this,
 				args
 			};
-			return header.apply_visitor(v);
+			header.apply_visitor(v);
 		}
 
 		xnet::service::serviceid_type service_peer::_newServiceId()

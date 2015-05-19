@@ -40,7 +40,9 @@ namespace xnet {
 				std::function<void(call_error&&)> excpHandler;
 			};
 		public:
-			service_peer(package_factory* factory);
+			typedef std::function<void(package&&)> emit_function;
+		public:
+			service_peer(package_factory* factory, const emit_function& emitFunc);
 
 			template<typename Service, typename Ret, typename... FArgs, typename... Args>
 			package make_invokation(const std::string& serviceName, Ret(Service::*method)(FArgs...), Args&&... args)
@@ -128,7 +130,7 @@ namespace xnet {
 
 			bool remove_service(const std::string& name);
 
-			package process_package(const package&);
+			void process_package(const package&);
 
 			template<typename Ret>
 			package _make_return_content_package(const Ret& return_value, returnid_type retId)
@@ -202,6 +204,7 @@ namespace xnet {
 			package_factory* _factory;
 			serviceid_type _nextServiceId = 1;
 			returnid_type _nextReturnId = 1;
+			emit_function _emit;
 		};
 	}
 }

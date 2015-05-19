@@ -1,4 +1,5 @@
 #include <iostream>
+#include <boost/asio/io_service.hpp>
 #include <xnet/service/remote_service.hpp>
 #include <xnet/service/service_peer.hpp>
 
@@ -54,10 +55,26 @@ public:
 
 int main()
 {
-	xnet::package_factory fac;
 	using namespace xnet::service;
-	service_peer clientPeer(&fac);
-	service_peer serverPeer(&fac);
+
+	std::function<void(const xnet::package&)> to_client;
+	std::function<void(const xnet::package&)> to_server;
+	boost::asio::io_service io_service;
+	xnet::package_factory fac;
+	auto post_to_server = [&](const xnet::package& p) { io_service.post(std::bind(to_server, p)); };
+	auto post_to_client = [&](const xnet::package& p) { io_service.post(std::bind(to_client, p)); };
+	service_peer clientPeer(&fac, post_to_server);
+	service_peer serverPeer(&fac, post_to_client);
+
+	to_client = [&](const xnet::package& p)
+	{
+		clientPeer.process_package(p);
+	};
+
+	to_server = [&](const xnet::package& p)
+	{
+		serverPeer.process_package(p);
+	};
 
 	serverPeer.add_service("loginService", std::make_shared<LoginServiceImpl>());
 
@@ -75,8 +92,9 @@ int main()
 			std::cout << "Error while logging in: " << e.what() << std::endl;
 		}, pw);
 
-		pack = serverPeer.process_package(pack);
-		clientPeer.process_package(pack);
+		post_to_server(pack);
+		io_service.run();
+		io_service.reset();
 	}
 
 	while (true)
@@ -90,7 +108,8 @@ int main()
 									[](const call_error& e){ std::cout << "Error while chatting: " << e.what() << std::endl; },
 									msg);
 
-		pack = serverPeer.process_package(pack);
-		clientPeer.process_package(pack);
+		post_to_server(pack);
+		io_service.run();
+		io_service.reset();
 	}
 }
