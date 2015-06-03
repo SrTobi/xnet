@@ -32,10 +32,14 @@ namespace service_tests {
 		called__int_params_test,
 		called__noncopyable_test,
 		called__service_test,
+		called__throw_user_error,
+		called__throw_std_error,
 		client_process_package,
 		server_process_package,
 		get_test_service,
 		returned,
+		user_error,
+		std_error,
 		_num_events
 	};
 
@@ -50,10 +54,14 @@ namespace service_tests {
 			"called__int_params_test",
 			"called__noncopyable_test",
 			"called__service_test",
+			"called__throw_user_error",
+			"called__throw_std_error",
 			"client_process_package",
 			"server_process_package",
 			"get_test_service",
-			"returned"
+			"returned",
+			"user_error",
+			"std_error"
 		};
 		out << evt_names[(int)value];
 		return out;
@@ -125,6 +133,18 @@ namespace service_tests {
 			return std::static_pointer_cast<test_service>(this->shared_from_this());
 		}
 
+		void throw_user_error()
+		{
+			_observer.expect(service_events::called__throw_user_error);
+			throw xnet::service::call_error("user defined error");
+		}
+
+		void throw_std_error()
+		{
+			_observer.expect(service_events::called__throw_std_error);
+			throw std::exception("...internal error something");
+		}
+
 	private:
 		mock_observer _observer;
 		static int _count;
@@ -150,6 +170,7 @@ namespace service_tests {
 		}
 
 
+		/************************************** static invokes/calls **************************************/
 		void check_invoke__void_test()
 		{
 			_observer.set()
@@ -294,6 +315,47 @@ namespace service_tests {
 			sv);
 		}
 
+		void check_invoke__throw_user_error()
+		{
+			_observer.set()
+				<< service_events::server_process_package
+				<< service_events::called__throw_user_error;
+
+			_client.invoke("default", &test_service::throw_user_error);
+		}
+
+		void check_call__throw_user_error()
+		{
+			_observer.set()
+				<< service_events::server_process_package
+				<< service_events::called__throw_user_error
+				<< service_events::client_process_package
+				<< service_events::user_error;
+
+			_client.call("default", &test_service::throw_user_error, [](){}, _expect_user_error_func);
+		}
+
+		void check_invoke__throw_std_error()
+		{
+			_observer.set()
+				<< service_events::server_process_package
+				<< service_events::called__throw_std_error;
+
+			_client.invoke("default", &test_service::throw_std_error);
+		}
+
+		void check_call__throw_std_error()
+		{
+			_observer.set()
+				<< service_events::server_process_package
+				<< service_events::called__throw_std_error
+				<< service_events::client_process_package
+				<< service_events::std_error;
+
+			_client.call("default", &test_service::throw_std_error, [](){}, _expect_std_error_func);
+		}
+
+		/************************************** dynamic invokes/calls **************************************/
 		void check_dyn_invoke__void_test()
 		{
 			auto s = dyn_get();
@@ -449,6 +511,50 @@ namespace service_tests {
 			}, _expect_no_error_func,
 			sv);
 		}
+
+		void check_dyn_invoke__throw_user_error()
+		{
+			auto s = dyn_get();
+			_observer.set()
+				<< service_events::server_process_package
+				<< service_events::called__throw_user_error;
+
+			_client.invoke(s, &test_service::throw_user_error);
+		}
+
+		void check_dyn_call__throw_user_error()
+		{
+			auto s = dyn_get();
+			_observer.set()
+				<< service_events::server_process_package
+				<< service_events::called__throw_user_error
+				<< service_events::client_process_package
+				<< service_events::user_error;
+
+			_client.call(s, &test_service::throw_user_error, [](){}, _expect_user_error_func);
+		}
+
+		void check_dyn_invoke__throw_std_error()
+		{
+			auto s = dyn_get();
+			_observer.set()
+				<< service_events::server_process_package
+				<< service_events::called__throw_std_error;
+
+			_client.invoke(s, &test_service::throw_std_error);
+		}
+
+		void check_dyn_call__throw_std_error()
+		{
+			auto s = dyn_get();
+			_observer.set()
+				<< service_events::server_process_package
+				<< service_events::called__throw_std_error
+				<< service_events::client_process_package
+				<< service_events::std_error;
+
+			_client.call(s, &test_service::throw_std_error, [](){}, _expect_std_error_func);
+		}
 	private:
 		remote_service<test_service> dyn_get()
 		{
@@ -480,6 +586,18 @@ namespace service_tests {
 		{
 			BOOST_ERROR("no exception expected");
 		};
+
+		std::function<void(const xnet::service::call_error&)> _expect_std_error_func = [&](const xnet::service::call_error& e)
+		{
+			_observer.expect(service_events::std_error);
+			BOOST_CHECK_EQUAL(e.what(), std::string("internal service error"));
+		};
+
+		std::function<void(const xnet::service::call_error&)> _expect_user_error_func = [&](const xnet::service::call_error& e)
+		{
+			_observer.expect(service_events::user_error);
+			BOOST_CHECK_EQUAL(e.what(), std::string("user defined error"));
+		};
 	};
 
 
@@ -502,6 +620,11 @@ namespace service_tests {
 		TESTX_FIXTURE_TEST(check_invoke__service_test);
 		TESTX_FIXTURE_TEST(check_call__service_test);
 
+		TESTX_FIXTURE_TEST(check_invoke__throw_user_error);
+		TESTX_FIXTURE_TEST(check_call__throw_user_error);
+
+		TESTX_FIXTURE_TEST(check_invoke__throw_std_error);
+		TESTX_FIXTURE_TEST(check_call__throw_std_error);
 
 
 		TESTX_FIXTURE_TEST(check_dyn_invoke__void_test);
@@ -522,6 +645,11 @@ namespace service_tests {
 		TESTX_FIXTURE_TEST(check_dyn_invoke__service_test);
 		TESTX_FIXTURE_TEST(check_dyn_call__service_test);
 
+		TESTX_FIXTURE_TEST(check_dyn_invoke__throw_user_error);
+		TESTX_FIXTURE_TEST(check_dyn_call__throw_user_error);
+
+		TESTX_FIXTURE_TEST(check_dyn_invoke__throw_std_error);
+		TESTX_FIXTURE_TEST(check_dyn_call__throw_std_error);
 	TESTX_END_FIXTURE_TEST();
 }
 
@@ -536,5 +664,7 @@ XNET_IMPLEMENT_SERVICE_DESCRIPTOR(service_tests, test_service, desc)
 	desc.add_method("get_test_service", &test_service::get_test_service);
 	desc.add_method("noncopyable_test", &test_service::noncopyable_test);
 	desc.add_method("service_test", &test_service::service_test);
+	desc.add_method("throw_user_error", &test_service::throw_user_error);
+	desc.add_method("throw_std_error", &test_service::throw_std_error);
 }
 
