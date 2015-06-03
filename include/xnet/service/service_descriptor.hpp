@@ -145,7 +145,7 @@ namespace xnet {
 			}
 
 		protected:
-			std::vector<service_method_descriptor*> _methods;
+			std::vector<std::shared_ptr<service_method_descriptor>> _methods;
 			std::string _checksum;
 		};
 
@@ -159,14 +159,14 @@ namespace xnet {
 			struct func_storage
 			{
 				typedef detail::specific_service_method_descriptor<Service, FuncDecl> mdesc_type;
-				typedef std::pair<FuncDecl, mdesc_type> func_mapping_item;
+				typedef std::pair<FuncDecl, std::shared_ptr<mdesc_type>> func_mapping_item;
 				typedef std::vector<func_mapping_item> func_mapping;
 
-				static service_method_descriptor& add_method(const std::string& name, FuncDecl method, funcid_type id)
+				static std::shared_ptr<service_method_descriptor> add_method(const std::string& name, FuncDecl method, funcid_type id)
 				{
 					static func_mapping funcMapping;
 
-					funcMapping.emplace_back(method, mdesc_type{ method, id });
+					funcMapping.emplace_back(method, std::make_shared<mdesc_type>(method, id));
 
 					/* TODOD:
 					 *if (!res.second)
@@ -190,7 +190,7 @@ namespace xnet {
 						throw std::logic_error("Requested method is not registered!");
 					}
 
-					return it->second;
+					return *(it->second);
 				}
 
 			private:
@@ -207,8 +207,9 @@ namespace xnet {
 			template<typename Ret, typename... Args>
 			service_descriptor& add_method(const std::string& name, Ret (Service::*method)(Args...))
 			{
-				auto& m = func_storage<Ret(Service::*)(Args...)>::add_method(name, method, _methods.size() + 1);
-				_methods.push_back(&m);
+				auto m = func_storage<Ret(Service::*)(Args...)>::add_method(name, method, _methods.size() + 1);
+				_methods.push_back(m);
+				assert(m->id() == _methods.size());
 				return *this;
 			}
 
