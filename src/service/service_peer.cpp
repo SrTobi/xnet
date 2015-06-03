@@ -277,6 +277,16 @@ namespace xnet {
 			_emit(_factory->make_package(XNET_TAGVAL(header), arg_pack));
 		}
 
+		xnet::package service_peer::_make_internal_exception_package(returnid_type retId)
+		{
+			protocol::header header  = protocol::return_exception
+			{
+				retId,
+				"internal service error"
+			};
+			return _factory->make_package(XNET_TAGVAL(header));
+		}
+
 		xnet::package service_peer::_make_exception_package(const std::exception& e, returnid_type retId)
 		{
 			protocol::header header  = protocol::return_exception

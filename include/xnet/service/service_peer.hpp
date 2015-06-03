@@ -156,6 +156,7 @@ namespace xnet {
 				auto content_package = _factory->make_package(XNET_TAGVAL(return_value), serialization::make_context(*this));
 				return _make_return_invokation_package(content_package, retId);
 			}
+			package _make_internal_exception_package(returnid_type retId);
 			package _make_exception_package(const std::exception& e, returnid_type retId);
 		private:
 
