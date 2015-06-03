@@ -61,7 +61,13 @@ namespace xnet {
 
 				virtual void invoke(const std::shared_ptr<generic_service>& service, service_peer& peer, const package& args) const final override
 				{
-					_prepare_call(_method, peer, service, args);
+					try {
+						_prepare_call(_method, peer, service, args);
+					}
+					catch (...)
+					{
+						// catch all exceptions in services
+					}
 				}
 
 				virtual package call(const std::shared_ptr<generic_service>& service, service_peer& peer, returnid_type retId, const package& args) const final override
