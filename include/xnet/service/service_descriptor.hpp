@@ -70,9 +70,13 @@ namespace xnet {
 						const auto return_value = _prepare_call(_method, peer, service, args);
 						return peer._make_return_content_package(return_value, retId);
 					}
-					catch (const std::exception& e)
+					catch (const call_error& e)
 					{
 						return peer._make_exception_package(e, retId);
+					}
+					catch (...)
+					{
+						return peer._make_internal_exception_package(retId);
 					}
 				}
 
