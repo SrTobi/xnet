@@ -103,6 +103,7 @@ namespace xnet {
 						throw std::runtime_error("unknown return id");
 
 					it->second.excpHandler(call.message);
+					slots.erase(it);
 				}
 
 				service_peer* peer;
