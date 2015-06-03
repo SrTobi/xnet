@@ -69,6 +69,17 @@ namespace service_tests {
 		test_service(mock_observer observer)
 			: _observer(observer)
 		{
+			++_count;
+		}
+
+		~test_service()
+		{
+			--_count;
+		}
+
+		static int Count()
+		{
+			return _count;
 		}
 
 	public:
@@ -116,7 +127,9 @@ namespace service_tests {
 
 	private:
 		mock_observer _observer;
+		static int _count;
 	};
+	int test_service::_count = 0;
 
 	class service_tester
 	{
@@ -130,6 +143,8 @@ namespace service_tests {
 
 		~service_tester()
 		{
+			_server.remove_service("default");
+			BOOST_CHECK_EQUAL(test_service::Count(), 0);
 			BOOST_CHECK_EQUAL(_client.open_return_slots(), 0);
 			BOOST_CHECK_EQUAL(_server.open_return_slots(), 0);
 		}
