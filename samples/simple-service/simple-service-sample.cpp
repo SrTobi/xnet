@@ -101,7 +101,7 @@ int main()
 		std::string msg;
 		std::cout << "Enter message for server: ";
 		std::getline(std::cin, msg);
-		clientPeer.call(chat_service,
+		chat_service.call(
 						&ChatService::chat,
 						[](std::string m) { std::cout << "Message from server: " << m << std::endl; },
 						[](const call_error& e){ std::cout << "Error while chatting: " << e.what() << std::endl; },

@@ -12,9 +12,11 @@ namespace xnet {
 		{
 		}
 
-		generic_service::generic_service(remote_tag_t)
+		generic_service::generic_service(service_peer* peer)
 			: _local(false)
+			, _peer(peer)
 		{
+			assert(_peer);
 		}
 	}
 }

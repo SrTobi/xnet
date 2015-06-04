@@ -31,11 +31,11 @@ namespace xnet {
 		protected:
 			virtual const generic_service_descriptor& _descriptor() const = 0;
 		private:
-			enum remote_tag_t { remote_tag };
-			generic_service(remote_tag_t);
+			generic_service(service_peer* peer);
 
 		private:
 			const bool _local = true;
+			service_peer* _peer;
 		};
 
 		template<typename Service>

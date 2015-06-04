@@ -20,7 +20,6 @@ namespace xnet {
 				void detach();
 			private:
 				serviceid_type _id;
-				service_peer* _peer;
 			};
 
 		}

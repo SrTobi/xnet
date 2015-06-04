@@ -7,9 +7,8 @@ namespace xnet {
 		namespace internal {
 
 			remote_service_backend::remote_service_backend(serviceid_type id, service_peer* peer)
-				: generic_service(generic_service::remote_tag)
+				: generic_service(peer)
 				, _id(id)
-				, _peer(peer)
 			{
 				assert(_id);
 				assert(_peer);

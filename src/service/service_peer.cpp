@@ -262,6 +262,7 @@ namespace xnet {
 		void service_peer::_invoke(const generic_service& service, funcid_type funcId, package arg_pack)
 		{
 			assert(!service._local);
+			assert(service._peer == this);
 			const auto& backend = static_cast<const internal::remote_service_backend&>(service);
 			
 			protocol::header header = protocol::dynamic_invokation
@@ -287,6 +288,7 @@ namespace xnet {
 		void service_peer::_call(const generic_service& service, funcid_type funcId, returnid_type returnId, package arg_pack)
 		{
 			assert(!service._local);
+			assert(service._peer == this);
 			const auto& backend = static_cast<const internal::remote_service_backend&>(service);
 			
 			protocol::header header = protocol::dynamic_call

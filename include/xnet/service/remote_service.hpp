@@ -33,34 +33,50 @@ namespace xnet {
 				assert(!_service || !remote());
 			}
 
-			/*template<typename Ret, typename... FArgs, typename... Args>
-			package make_invokation(Ret(Service::*method)(FArgs...), Args&&... args)
+			template<typename Service, typename Ret, typename... FArgs, typename... Args>
+			void invoke(Ret(Service::*method)(FArgs...), Args&&... args)
 			{
+				static_assert(is_service<Service>::value, "Service must be a service!");
 				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
-				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value...>::value, "Provided arguments can not be converted to required types!");
-				assert(_service);
+				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value..., true>::value, "Provided arguments can not be converted to required types!");
+				{
+					assert(remote());
+					assert(_service->_peer);
+				}
 
-				throw std::exception("Not implemented");
+				const auto& desc = get_descriptor<Service>();
+				service_peer* peer = _service->_peer;
+
+				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
+				package arg_pack = peer->_factory->make_package(arguments, serialization::make_context(*peer));
+				peer->_invoke(*_service, desc.resolve_method(method).id(), arg_pack);
 			}
 
-			template<typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
-			package make_call(
+			template<typename Service, typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
+			void call(
 				Ret(Service::*method)(FArgs...),
-				RetHandler handler,
-				ExcpHandler excpHandler,
-				Args&&...)
+				RetHandler&& handler,
+				ExcpHandler&& excpHandler,
+				Args&&... args)
 			{
+				static_assert(is_service<Service>::value, "Service must be a service!");
 				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
-				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value...>::value, "Provided arguments can not be converted to required types!");
-				static_assert(std::is_convertible<RetHandler, std::function<void(Ret&&)>>::value, "RetHandler must be convertible to void(Ret)!");
+				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value..., true>::value, "Provided arguments can not be converted to required types!");
 				static_assert(std::is_convertible<ExcpHandler, std::function<void(call_error&&)>>::value, "RetHandler must be convertible to void(Ret)!");
-				std::function<void(Ret&&)> func = handler;
-				std::function<void(call_error&&)> func2 = excpHandler;
+				{
+					std::function<void(call_error&&)> excpHandler2 = excpHandler;
 
-				assert(_service);
+					assert(remote());
+					assert(_service->_peer);
+				}
 
-				throw std::exception("Not implemented");
-			}*/
+				const auto& desc = get_descriptor<Service>();
+				service_peer* peer = _service->_peer;
+
+				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
+				package arg_pack = peer->_factory->make_package(arguments, serialization::make_context(*peer));
+				peer->_call(*_service, desc.resolve_method(method).id(), peer->_make_return_id<Ret>(handler, excpHandler, std::is_void<Ret>()), arg_pack);
+			}
 
 			bool operator ==(const remote_service& other) const
 			{
