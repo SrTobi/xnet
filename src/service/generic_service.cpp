@@ -18,5 +18,13 @@ namespace xnet {
 		{
 			assert(_peer);
 		}
+
+		service_peer& generic_service::call_origin() const
+		{
+			assert(_local);
+			assert(_peer);
+			return *_peer;
+		}
+
 	}
 }

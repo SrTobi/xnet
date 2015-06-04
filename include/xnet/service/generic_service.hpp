@@ -30,6 +30,7 @@ namespace xnet {
 
 		protected:
 			virtual const generic_service_descriptor& _descriptor() const = 0;
+			service_peer& call_origin() const;
 		private:
 			generic_service(service_peer* peer);
 

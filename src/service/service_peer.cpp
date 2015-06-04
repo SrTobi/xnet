@@ -1,4 +1,5 @@
 #include "xnet/service/service_peer.hpp"
+#include "xnet/detail/finnaly.hpp"
 #include "remote_service_backend.hpp"
 #include "service_protocol.hpp"
 
@@ -73,6 +74,9 @@ namespace xnet {
 				{
 					std::shared_ptr<generic_service> service;
 					auto& desc = _static_descriptor(call.service_name, call.service_checksum, service);
+
+					service->_peer = peer;
+					xnet::detail::finally finl = [&service]() { service->_peer = nullptr; };
 					desc.invoke(service, *peer, call.func_id, args);
 				}
 
@@ -80,6 +84,9 @@ namespace xnet {
 				{
 					std::shared_ptr<generic_service> service;
 					auto& desc = _static_descriptor(call.service_name, call.service_checksum, service);
+
+					service->_peer = peer;
+					xnet::detail::finally finl = [&service]() { service->_peer = nullptr; };
 					peer->_emit(desc.call(service, *peer, call.func_id, call.return_id, args));
 				}
 
@@ -87,6 +94,9 @@ namespace xnet {
 				{
 					std::shared_ptr<generic_service> service;
 					auto& desc = _dynamic_descriptor(call.service_id, service);
+
+					service->_peer = peer;
+					xnet::detail::finally finl = [&service]() { service->_peer = nullptr; };
 					desc.invoke(service, *peer, call.func_id, args);
 				}
 
@@ -94,6 +104,9 @@ namespace xnet {
 				{
 					std::shared_ptr<generic_service> service;
 					auto& desc = _dynamic_descriptor(call.service_id, service);
+
+					service->_peer = peer;
+					xnet::detail::finally finl = [&service]() { service->_peer = nullptr; };
 					peer->_emit(desc.call(service, *peer, call.func_id, call.return_id, args));
 				}
 
