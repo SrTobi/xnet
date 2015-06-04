@@ -12,6 +12,19 @@ namespace xnet {
 			assert(factory);
 		}
 
+		service_peer::~service_peer()
+		{
+			_namedServices.clear();
+
+			for (auto& p : _incomingServices)
+			{
+				auto s = p.second.lock();
+				assert(s);
+				s->detach();
+			}
+			_incomingServices.clear();
+		}
+
 		/*void service_peer::associate_service(std::shared_ptr<generic_service> service)
 		{
 			assert(service);
@@ -106,6 +119,11 @@ namespace xnet {
 					slots.erase(it);
 				}
 
+				void operator()(protocol::release_service& call)
+				{
+					peer->_release_outgoing_serivce(call.service_id);
+				}
+
 				service_peer* peer;
 				const package& args;
 
@@ -191,12 +209,14 @@ namespace xnet {
 
 			if (it == _incomingServices.end())
 			{
-				auto res = std::make_shared<internal::remote_service_backend>(id);
+				auto res = std::make_shared<internal::remote_service_backend>(id, this);
 				_incomingServices.emplace(id, res);
 				return res;
 			}
 
-			return  it->second;
+			auto s = it->second.lock();
+			assert(s);
+			return s;
 		}
 
 		xnet::service::serviceid_type service_peer::_make_outgoing_service(const std::shared_ptr<generic_service>& service, const std::type_info& info)
@@ -276,6 +296,31 @@ namespace xnet {
 				returnId
 			};
 			_emit(_factory->make_package(XNET_TAGVAL(header), arg_pack));
+		}
+
+		void service_peer::_notify_remote_service_release(serviceid_type id)
+		{
+			auto it = _incomingServices.find(id);
+			assert(it != _incomingServices.end());
+			assert(it->second.lock() == nullptr);
+			_incomingServices.erase(it);
+			
+			protocol::header header = protocol::release_service
+			{
+				id
+			};
+			_emit(_factory->make_package(XNET_TAGVAL(header)));
+		}
+
+		void service_peer::_release_outgoing_serivce(serviceid_type id)
+		{
+			auto id_it = _outgoingServicesById.find(id);
+			if (id_it == _outgoingServicesById.end())
+			{
+				throw std::runtime_error("outgoing service does not exist");
+			}
+			_outgoingServices.erase(id_it->second);
+			_outgoingServicesById.erase(id_it);
 		}
 
 		xnet::package service_peer::_make_internal_exception_package(returnid_type retId)

@@ -24,6 +24,10 @@ namespace xnet {
 
 			};
 		}
+		namespace internal {
+			class remote_service_backend;
+		}
+
 		template<typename Service>
 		class remote_service;
 
@@ -39,10 +43,12 @@ namespace xnet {
 				std::function<void(const package&)> handler;
 				std::function<void(call_error&&)> excpHandler;
 			};
+			friend class internal::remote_service_backend;
 		public:
 			typedef std::function<void(package&&)> emit_function;
 		public:
 			service_peer(package_factory* factory, const emit_function& emitFunc);
+			~service_peer();
 
 			template<typename Service, typename Ret, typename... FArgs, typename... Args>
 			void invoke(const std::string& serviceName, Ret(Service::*method)(FArgs...), Args&&... args)
@@ -215,10 +221,13 @@ namespace xnet {
 			void _invoke(const generic_service& service, funcid_type funcId, package arg_pack);
 			void _call(const std::string& serviceName, const std::string& checksum, funcid_type funcId, returnid_type returnId, package arg_pack);
 			void _call(const generic_service& service, funcid_type funcId, returnid_type returnId, package arg_pack);
+
+			void _notify_remote_service_release(serviceid_type id);
+			void _release_outgoing_serivce(serviceid_type id);
 		private:
 			std::unordered_map<std::shared_ptr<generic_service>, serviceid_type> _outgoingServices;
 			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _outgoingServicesById;
-			std::unordered_map<serviceid_type, std::shared_ptr<generic_service>> _incomingServices;
+			std::unordered_map<serviceid_type, std::weak_ptr<internal::remote_service_backend>> _incomingServices;
 			std::unordered_map<returnid_type, return_slot> _returnSlots;
 			std::unordered_map<std::string, std::shared_ptr<generic_service>> _namedServices;
 			package_factory* _factory;

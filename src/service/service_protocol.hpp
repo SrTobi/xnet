@@ -89,7 +89,18 @@ namespace xnet {
 				}
 			};
 
-			typedef boost::variant<static_invokation, static_call, dynamic_invokation, dynamic_call, return_invokation, return_exception> header;
+			struct release_service
+			{
+				serviceid_type service_id;
+
+				template<typename S>
+				void serialize(S& s)
+				{
+					s & XNET_TAGVAL(service_id);
+				}
+			};
+
+			typedef boost::variant<static_invokation, static_call, dynamic_invokation, dynamic_call, return_invokation, return_exception, release_service> header;
 		}
 	}
 }

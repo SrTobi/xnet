@@ -12,12 +12,15 @@ namespace xnet {
 				: public generic_service
 			{
 			public:
-				remote_service_backend(serviceid_type id);
+				remote_service_backend(serviceid_type id, service_peer* peer);
+				virtual ~remote_service_backend();
 
 				virtual const generic_service_descriptor& _descriptor() const override final;
 				serviceid_type id() const;
+				void detach();
 			private:
 				serviceid_type _id;
+				service_peer* _peer;
 			};
 
 		}
