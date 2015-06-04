@@ -40,6 +40,7 @@ namespace service_tests {
 		returned,
 		user_error,
 		std_error,
+		destruct__test_service,
 		_num_events
 	};
 
@@ -61,7 +62,8 @@ namespace service_tests {
 			"get_test_service",
 			"returned",
 			"user_error",
-			"std_error"
+			"std_error",
+			"destruct__test_service"
 		};
 		out << evt_names[(int)value];
 		return out;
@@ -82,6 +84,7 @@ namespace service_tests {
 
 		~test_service()
 		{
+			_observer.expect(service_events::destruct__test_service);
 			--_count;
 		}
 
@@ -130,7 +133,7 @@ namespace service_tests {
 		remote_service<test_service> service_test(remote_service<test_service> other)
 		{
 			_observer.expect(service_events::called__service_test);
-			return std::static_pointer_cast<test_service>(this->shared_from_this());
+			return std::make_shared<test_service>(_observer);
 		}
 
 		void throw_user_error()
@@ -163,6 +166,8 @@ namespace service_tests {
 
 		~service_tester()
 		{
+			_observer.set()
+				<< service_events::destruct__test_service;
 			_server.remove_service("default");
 			BOOST_CHECK_EQUAL(test_service::Count(), 0);
 			BOOST_CHECK_EQUAL(_client.open_return_slots(), 0);
@@ -290,7 +295,9 @@ namespace service_tests {
 		{
 			_observer.set()
 				<< service_events::server_process_package
-				<< service_events::called__service_test;
+				<< service_events::called__service_test
+				<< service_events::client_process_package
+				<< service_events::destruct__test_service;
 
 			auto sv = _server.get_service<test_service>("default");
 			BOOST_CHECK(sv);
@@ -304,7 +311,12 @@ namespace service_tests {
 				<< service_events::server_process_package
 				<< service_events::called__service_test
 				<< service_events::client_process_package
-				<< service_events::returned;
+				//<< service_events::destruct__test_service; <-- because we used the default service!
+				<< service_events::client_process_package
+				<< service_events::returned
+				<< service_events::server_process_package
+				<< service_events::destruct__test_service;
+
 
 			auto sv = _server.get_service<test_service>("default");
 			BOOST_CHECK(sv);
@@ -364,6 +376,8 @@ namespace service_tests {
 				<< service_events::called__void_test;
 
 			_client.invoke(s, &test_service::void_test);
+
+			dyn_end();
 		}
 
 		void check_dyn_call__void_test()
@@ -378,6 +392,8 @@ namespace service_tests {
 			_client.call(s, &test_service::void_test, [this](){
 				_observer.expect(service_events::returned);
 			}, _expect_no_error_func);
+
+			dyn_end();
 		}
 
 		void check_dyn_invoke__void_params_test()
@@ -388,6 +404,7 @@ namespace service_tests {
 				<< service_events::called__void_params_test;
 
 			_client.invoke(s, &test_service::void_params_test, 666);
+			dyn_end();
 		}
 
 		void check_dyn_call__void_params_test()
@@ -403,6 +420,7 @@ namespace service_tests {
 				_observer.expect(service_events::returned);
 			}, _expect_no_error_func,
 			666);
+			dyn_end();
 		}
 
 		void check_dyn_invoke__int_test()
@@ -413,6 +431,7 @@ namespace service_tests {
 				<< service_events::called__int_test;
 
 			_client.invoke(s, &test_service::int_test);
+			dyn_end();
 		}
 
 		void check_dyn_call__int_test()
@@ -428,6 +447,7 @@ namespace service_tests {
 				_observer.expect(service_events::returned);
 				BOOST_CHECK_EQUAL(i, 777);
 			}, _expect_no_error_func);
+			dyn_end();
 		}
 
 		void check_dyn_invoke__int_params_test()
@@ -438,6 +458,7 @@ namespace service_tests {
 				<< service_events::called__int_params_test;
 
 			_client.invoke(s, &test_service::int_params_test, "devil");
+			dyn_end();
 		}
 
 		void check_dyn_call__int_params_test()
@@ -454,6 +475,7 @@ namespace service_tests {
 				BOOST_CHECK_EQUAL(i, 888);
 			}, _expect_no_error_func,
 			"devil");
+			dyn_end();
 		}
 
 		void check_dyn_invoke__noncopyable_test()
@@ -464,6 +486,7 @@ namespace service_tests {
 				<< service_events::called__noncopyable_test;
 
 			_client.invoke(s, &test_service::noncopyable_test, onlymovable());
+			dyn_end();
 		}
 
 		void check_dyn_call__noncopyable_test()
@@ -479,6 +502,7 @@ namespace service_tests {
 				_observer.expect(service_events::returned);
 			}, _expect_no_error_func,
 			onlymovable());
+			dyn_end();
 		}
 
 		void check_dyn_invoke__service_test()
@@ -486,12 +510,15 @@ namespace service_tests {
 			auto s = dyn_get();
 			_observer.set()
 				<< service_events::server_process_package
-				<< service_events::called__service_test;
+				<< service_events::called__service_test
+				<< service_events::client_process_package
+				<< service_events::destruct__test_service;
 
 			auto sv = _server.get_service<test_service>("default");
 			BOOST_CHECK(sv);
 
 			_client.invoke(s, &test_service::service_test, sv);
+			dyn_end();
 		}
 
 		void check_dyn_call__service_test()
@@ -501,7 +528,11 @@ namespace service_tests {
 				<< service_events::server_process_package
 				<< service_events::called__service_test
 				<< service_events::client_process_package
-				<< service_events::returned;
+				//<< service_events::destruct__test_service; <-- because we used the default service!
+				<< service_events::client_process_package
+				<< service_events::returned
+				<< service_events::server_process_package
+				<< service_events::destruct__test_service;
 
 			auto sv = _server.get_service<test_service>("default");
 			BOOST_CHECK(sv);
@@ -510,6 +541,7 @@ namespace service_tests {
 				_observer.expect(service_events::returned);
 			}, _expect_no_error_func,
 			sv);
+			dyn_end();
 		}
 
 		void check_dyn_invoke__throw_user_error()
@@ -520,6 +552,7 @@ namespace service_tests {
 				<< service_events::called__throw_user_error;
 
 			_client.invoke(s, &test_service::throw_user_error);
+			dyn_end();
 		}
 
 		void check_dyn_call__throw_user_error()
@@ -532,6 +565,7 @@ namespace service_tests {
 				<< service_events::user_error;
 
 			_client.call(s, &test_service::throw_user_error, [](){}, _expect_user_error_func);
+			dyn_end();
 		}
 
 		void check_dyn_invoke__throw_std_error()
@@ -542,6 +576,7 @@ namespace service_tests {
 				<< service_events::called__throw_std_error;
 
 			_client.invoke(s, &test_service::throw_std_error);
+			dyn_end();
 		}
 
 		void check_dyn_call__throw_std_error()
@@ -554,6 +589,7 @@ namespace service_tests {
 				<< service_events::std_error;
 
 			_client.call(s, &test_service::throw_std_error, [](){}, _expect_std_error_func);
+			dyn_end();
 		}
 	private:
 		remote_service<test_service> dyn_get()
@@ -574,6 +610,13 @@ namespace service_tests {
 			BOOST_CHECK(service);
 
 			return service;
+		}
+
+		void dyn_end()
+		{
+			_observer.set()
+				<< service_events::server_process_package
+				<< service_events::destruct__test_service;
 		}
 
 	private:
