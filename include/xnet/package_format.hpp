@@ -17,7 +17,6 @@ namespace xnet {
 		package_format(const package_format& other);
 
 		const char* name() const;
-		id_type id() const;
 
 		bool operator ==(const package_format& right) const;
 		bool operator !=(const package_format& right) const;

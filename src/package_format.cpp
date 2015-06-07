@@ -22,11 +22,6 @@ namespace xnet {
 		return _format.data();
 	}
 
-	package_format::id_type package_format::id() const
-	{
-		return _formatId;
-	}
-
 	bool package_format::operator==(const package_format& right) const
 	{
 		return _formatId == right._formatId;
