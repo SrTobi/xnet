@@ -240,7 +240,7 @@ namespace xnet {
 			struct service_descriptor_getter
 			{
 				static_assert(is_service<Service>::value, "Service must be a service!");
-				inline static const service_descriptor<Service>& get();
+				static const service_descriptor<Service>& get();
 			};
 		}
 
@@ -255,7 +255,7 @@ namespace xnet {
 		void _Xnet_init_service_##_service##_descriptor(::xnet::service::service_descriptor<_nspace::_service>& _desk); \
 		namespace xnet_detail { const ::xnet::service::service_descriptor<_nspace::_service> _Xnet_##_service##_descriptor(_name, \
 		[](::xnet::service::service_descriptor<_nspace::_service>& desk){ _Xnet_init_service_##_service##_descriptor(desk); }); }\
-		namespace xnet {namespace service { const service_descriptor<_nspace::_service>& detail::service_descriptor_getter<_nspace::_service>::get() { return ::xnet_detail::_Xnet_##_service##_descriptor;}\
+		namespace xnet {namespace service {namespace detail { const service_descriptor<_nspace::_service>& service_descriptor_getter<_nspace::_service>::get() { return ::xnet_detail::_Xnet_##_service##_descriptor;}}\
 		const generic_service_descriptor& abstract_service<_nspace::_service>::_descriptor() const {return ::xnet_detail::_Xnet_##_service##_descriptor;}}} \
 		void _Xnet_init_service_##_service##_descriptor(::xnet::service::service_descriptor<_nspace::_service>& _desk)
 
