@@ -1,3 +1,4 @@
+#include "xnet/service/service_peer.hpp"
 #include "xnet/service/generic_service.hpp"
 
 namespace xnet {
@@ -19,7 +20,7 @@ namespace xnet {
 			assert(_peer);
 		}
 
-		service_peer& generic_service::call_origin() const
+		service_peer generic_service::call_origin() const
 		{
 			assert(_local);
 			assert(_peer);
