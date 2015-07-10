@@ -9,15 +9,16 @@ void do_client(unsigned short port)
 {
 	asio::io_service ios;
 	std::string addr;
+	xnet::package_factory pfactory;
 
 	std::cout << "Target address: ";
 	std::getline(std::cin, addr);
 
 	
-	try
+	//try
 	{
 		std::cout << "Connecting to " << addr << ":" << port << "..." << std::endl;
-		chat_client client(ios);
+		chat_client client(ios, pfactory);
 
 		tcp::resolver resolver(ios);
 		auto it = resolver.resolve({ addr, std::to_string(port) });
@@ -27,9 +28,9 @@ void do_client(unsigned short port)
 
 		ios.run();
 	}
-	catch (std::exception& e)
+	//catch (std::exception& e)
 	{
-		std::cout << "Failed to start chat server [" << e.what() << "]!" << std::endl;
+		//std::cout << "Failed to start chat server [" << e.what() << "]!" << std::endl;
 	}
 }
 
@@ -37,11 +38,12 @@ void do_client(unsigned short port)
 void do_server(unsigned short port)
 {
 	asio::io_service ios;
+	xnet::package_factory pfactory;
 	std::cout << "Start chat server on port " << port << "..." << std::endl;
 	
 	try
 	{
-		chat_server server(ios);
+		chat_server server(ios, pfactory);
 
 		tcp::endpoint server_bind(tcp::v4(), port);
 		server.start(server_bind);
