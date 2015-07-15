@@ -7,34 +7,15 @@
 #include "../serialization/types/tuple.hpp"
 #include "../detail/variadic_utils.hpp"
 #include "service_descriptor.hpp"
+#include "remote_service.hpp"
 #include "call_error.hpp"
 #include "../package.hpp"
 #include "../package_factory.hpp"
 
 namespace xnet {
 	namespace service {
-		namespace detail {
-			template<typename Target, typename Source>
-			struct ref_or_val
-			{
-				typedef typename std::conditional<
-					std::is_same<Target, Source>::value,
-					const Target&,
-					Target>::type type;
-
-			};
-		}
-		namespace internal {
-			class remote_service_backend;
-		}
-
-		template<typename Service>
-		class remote_service;
-
 		class service_peer
 		{
-			template<typename Service>
-			friend class remote_service;
 			template<typename Service, typename Method>
 			class detail::specific_service_method_descriptor;
 
@@ -50,41 +31,10 @@ namespace xnet {
 			service_peer(package_factory* factory, const emit_function& emitFunc);
 			~service_peer();
 
-			template<typename Service, typename Ret, typename... FArgs, typename... Args>
-			void invoke(const std::string& serviceName, Ret(Service::*method)(FArgs...), Args&&... args)
+			template<typename Service>
+			remote_service<Service> static_service(const std::string& name)
 			{
-				static_assert(is_service<Service>::value, "Service must be a service!");
-				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
-				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value..., true>::value, "Provided arguments can not be converted to required types!");
-
-				const auto& desc = get_descriptor<Service>();
-
-				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
-				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
-				_invoke(serviceName, desc.checksum(), desc.resolve_method(method).id(), arg_pack);
-			}
-
-			template<typename Service, typename Ret, typename... FArgs, typename RetHandler, typename ExcpHandler, typename... Args>
-			void call(
-				const std::string& serviceName,
-				Ret(Service::*method)(FArgs...),
-				RetHandler&& handler,
-				ExcpHandler&& excpHandler,
-				Args&&... args)
-			{
-				static_assert(is_service<Service>::value, "Service must be a service!");
-				static_assert(sizeof...(FArgs) == sizeof...(Args), "Wrong number of arguments provided!");
-				static_assert(::xnet::detail::variadic_and<std::is_convertible<Args, FArgs>::value..., true>::value, "Provided arguments can not be converted to required types!");
-				static_assert(std::is_convertible<ExcpHandler, std::function<void(call_error&&)>>::value, "RetHandler must be convertible to void(Ret)!");
-				{
-					std::function<void(call_error&&)> excpHandler2 = excpHandler;
-				}
-
-				const auto& desc = get_descriptor<Service>();
-
-				std::tuple<typename detail::ref_or_val<FArgs, Args>::type...> arguments(args...);
-				package arg_pack = _factory->make_package(arguments, serialization::make_context(*this));
-				_call(serviceName, desc.checksum(), desc.resolve_method(method).id(), _make_return_id<Ret>(handler, excpHandler, std::is_void<Ret>()), arg_pack);
+				return nullptr;
 			}
 
 			template<typename Service>

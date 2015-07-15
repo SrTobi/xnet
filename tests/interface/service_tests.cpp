@@ -4,7 +4,7 @@
 #include <xnet/service/service_peer.hpp>
 #include <xnet/service/remote_service.hpp>
 
-
+/*
 namespace service_tests {
 	using namespace xnet::service;
 
@@ -176,6 +176,7 @@ namespace service_tests {
 
 
 		/************************************** static invokes/calls **************************************/
+/*
 		void check_invoke__void_test()
 		{
 			_observer.set()
@@ -368,6 +369,7 @@ namespace service_tests {
 		}
 
 		/************************************** dynamic invokes/calls **************************************/
+/*
 		void check_dyn_invoke__void_test()
 		{
 			auto s = dyn_get();
@@ -711,3 +713,4 @@ XNET_IMPLEMENT_SERVICE_DESCRIPTOR(service_tests, test_service, desc)
 	desc.add_method("throw_std_error", &test_service::throw_std_error);
 }
 
+*/
