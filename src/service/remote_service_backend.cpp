@@ -26,7 +26,7 @@ namespace xnet {
 				}
 			}
 
-			const generic_service_descriptor& remote_service_backend::_descriptor() const
+			const service_descriptor& remote_service_backend::_descriptor() const
 			{
 				throw std::logic_error("can not get remote service's descriptor");
 			}

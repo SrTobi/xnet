@@ -15,7 +15,7 @@ namespace xnet {
 		typedef uint16_t serviceid_type;
 		class service_peer;
 		class generic_service;
-		class generic_service_descriptor;
+		class service_descriptor;
 
 		class generic_service
 			: public std::enable_shared_from_this<generic_service>
@@ -29,7 +29,7 @@ namespace xnet {
 			virtual ~generic_service();
 
 		protected:
-			virtual const generic_service_descriptor& _descriptor() const = 0;
+			virtual const service_descriptor& _descriptor() const = 0;
 			service_peer call_origin() const;
 		private:
 			generic_service(service_peer* peer);
@@ -45,7 +45,7 @@ namespace xnet {
 		{
 			friend class service_peer;
 		protected:
-			virtual const generic_service_descriptor& _descriptor() const override final;
+			virtual const service_descriptor& _descriptor() const override final;
 		};
 
 		template<typename Service>

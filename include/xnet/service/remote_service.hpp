@@ -20,13 +20,54 @@ namespace xnet {
 		class remote_service_implementation
 			: public generic_service
 		{
+			friend class serialization::access;
 		public:
+			typedef std::function<void(const package&)> return_handler;
 			typedef std::function<void(const xnet::service::call_error&)> exception_handler;
-			typedef std::function<void()> chat_return_handler;
 
 		public:
-			virtual void invoke(...);
-			virtual void call(...);
+			virtual void invoke(funcid_type funcId, package args);
+			template<typename Ret, typename RetHandler, typename ExcpHandler, typename... Args>
+			void call(funcid_type funcId, RetHandler&& returnHandler, ExcpHandler&& excpHandler, const std::tuple<Args...>& arguments)
+			{
+				package arg_pack = _peer->factory()->make_package(XNET_TAGVAL(arguments), serialization::make_context(*_peer));
+				_call(funcId, _make_return_handler<Ret>(returnHandler, std::is_void<Ret>()), excpHandler, std::move(arg_pack));
+			}
+
+		private:
+			template<typename Ret, typename RetHandler>
+			return_handler _make_return_handler(RetHandler&& handler, const std::false_type& isVoid)
+			{
+				{
+					static_assert(std::is_convertible<RetHandler, std::function<void(Ret&&)>>::value, "RetHandler must be convertible to void(Ret)!");
+					std::function<void(Ret&&)> handler2 = handler;
+				}
+
+				return [handler, this](const package& p)
+				{
+					Ret return_value;
+					p.deserialize(XNET_TAGVAL(return_value), serialization::make_context(*_peer), package::try_next_package);
+					handler(std::move(return_value));
+				};
+			}
+
+			template<typename Ret, typename RetHandler, typename ExcpHandler>
+			return_handler _make_return_handler(RetHandler&& handler, const std::true_type& isVoid)
+			{
+				{
+					static_assert(std::is_convertible<RetHandler, std::function<void()>>::value, "RetHandler must be convertible to void()!");
+					std::function<void()> handler2 = handler;
+				}
+				return [handler](const package& p)
+				{
+					handler();
+				};
+			}
+
+			virtual void _call(funcid_type funcid, return_handler returnHandler, exception_handler excpHandler, package args) = 0;
+
+		private:
+			service_peer* _peer;
 		};
 
 		template<typename Service>
@@ -84,6 +125,41 @@ namespace xnet {
 				return !_service;
 			}
 
+		private:
+			template<typename S>
+			void serialize(S& s)
+			{
+				serialization::split_this(this, s);
+			}
+
+			template<typename S>
+			void load(S& s)
+			{
+				serviceid_type id;
+				s >> id;
+				if (id == 0)
+				{
+					_service = nullptr;
+				}
+				else{
+					std::string checksum;
+					s >> checksum;
+					_service = s.context<service_peer>()._make_incoming_service<Service>(id, checksum);
+				}
+			}
+
+			template<typename S>
+			void save(S& s) const
+			{
+				if (!_service)
+				{
+					s << serviceid_type(0);
+				}
+				else{
+					s << s.context<service_peer>()._make_outgoing_service(_service, typeid(Service));
+					s << get_descriptor<Service>().checksum();
+				}
+			}
 		private:
 			std::shared_ptr<generic_service> _service;
 		};

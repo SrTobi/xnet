@@ -16,8 +16,8 @@ namespace xnet {
 	namespace service {
 		class service_peer
 		{
-			template<typename Service, typename Method>
-			class detail::specific_service_method_descriptor;
+			template<typename Service>
+			friend class remote_service;
 
 			struct return_slot
 			{
@@ -63,6 +63,8 @@ namespace xnet {
 
 			void process_package(const package&);
 			std::size_t open_return_slots() const;
+
+			package_factory* factory() const;
 
 			template<typename Ret>
 			package _make_return_content_package(const Ret& return_value, returnid_type retId)

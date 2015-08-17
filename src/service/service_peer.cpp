@@ -77,7 +77,7 @@ namespace xnet {
 
 					service->_peer = peer;
 					xnet::detail::finally finl = [&service]() { service->_peer = nullptr; };
-					desc.invoke(service, *peer, call.func_id, args);
+					desc.invoke(*peer, *service, call.func_id, args);
 				}
 
 				void operator()(protocol::static_call& call)
@@ -87,7 +87,8 @@ namespace xnet {
 
 					service->_peer = peer;
 					xnet::detail::finally finl = [&service]() { service->_peer = nullptr; };
-					peer->_emit(desc.call(service, *peer, call.func_id, call.return_id, args));
+					auto retvalue_pack = desc.call(*peer, *service, call.func_id, args);
+					//peer->_emit(desc.call(peer, *service, call.func_id, call.return_id, args));
 				}
 
 				void operator()(protocol::dynamic_invokation& call)
@@ -97,7 +98,7 @@ namespace xnet {
 
 					service->_peer = peer;
 					xnet::detail::finally finl = [&service]() { service->_peer = nullptr; };
-					desc.invoke(service, *peer, call.func_id, args);
+					desc.invoke(*peer, *service, call.func_id, args);
 				}
 
 				void operator()(protocol::dynamic_call& call)
@@ -107,7 +108,7 @@ namespace xnet {
 
 					service->_peer = peer;
 					xnet::detail::finally finl = [&service]() { service->_peer = nullptr; };
-					peer->_emit(desc.call(service, *peer, call.func_id, call.return_id, args));
+					auto retvalue_pack = desc.call(*peer, *service, call.func_id, args);
 				}
 
 				void operator()(protocol::return_invokation& call)
@@ -141,7 +142,7 @@ namespace xnet {
 				const package& args;
 
 			private:
-				const generic_service_descriptor& _static_descriptor(const std::string& serviceName, const std::string& serviceChecksum, std::shared_ptr<generic_service>& service)
+				const service_descriptor& _static_descriptor(const std::string& serviceName, const std::string& serviceChecksum, std::shared_ptr<generic_service>& service)
 				{
 					service = peer->get_service<generic_service>(serviceName);
 					if (!service)
@@ -161,7 +162,7 @@ namespace xnet {
 					return desc;
 				}
 
-				const generic_service_descriptor& _dynamic_descriptor(serviceid_type serviceId, std::shared_ptr<generic_service>& service)
+				const service_descriptor& _dynamic_descriptor(serviceid_type serviceId, std::shared_ptr<generic_service>& service)
 				{
 					auto it = peer->_outgoingServicesById.find(serviceId);
 					if (it == peer->_outgoingServicesById.end())
@@ -356,6 +357,11 @@ namespace xnet {
 				e.what()
 			};
 			return _factory->make_package(XNET_TAGVAL(header));
+		}
+
+		package_factory* service_peer::factory() const
+		{
+			return _factory;
 		}
 	}
 }

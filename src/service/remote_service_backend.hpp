@@ -15,7 +15,7 @@ namespace xnet {
 				remote_service_backend(serviceid_type id, service_peer* peer);
 				virtual ~remote_service_backend();
 
-				virtual const generic_service_descriptor& _descriptor() const override final;
+				virtual const service_descriptor& _descriptor() const override final;
 				serviceid_type id() const;
 				void detach();
 			private:

@@ -20,11 +20,11 @@ namespace xnet {
 			~remote_service_interface();
 
 			void chat(const std::string& msg, xnet::service::invoke_t);
-			void chat(const std::string& msg, const chat_return_handler& ret_handler, const exception_handler& excp_handler);
+			void chat(const std::string& msg,  chat_return_handler ret_handler, exception_handler excp_handler);
 
 			remote_service_interface* operator ->();
 		private:
-			remote_service_interface* _impl;
+			remote_service_implementation* _impl;
 		};
 	}
 }

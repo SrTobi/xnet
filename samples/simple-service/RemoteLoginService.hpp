@@ -19,12 +19,12 @@ namespace xnet {
 			remote_service_interface(remote_service_implementation* impl);
 			~remote_service_interface();
 
-			void login(std::string msg, xnet::service::invoke_t);
-			void login(std::string password, const login_return_handler& ret_handler, const exception_handler& excp_handler);
+			void login(std::string password, xnet::service::invoke_t);
+			void login(std::string password, login_return_handler ret_handler, exception_handler excp_handler);
 
 			remote_service_interface* operator ->();
 		private:
-			remote_service_interface* _impl;
+			remote_service_implementation* _impl;
 		};
 	}
 }
